@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
+    <title>Client</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @fluxAppearance
+</head>
+
+<body class="min-h-screen bg-white dark:bg-zinc-800 antialiased">
+    <flux:header container class="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
+        <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+        <flux:brand href="#" logo="/images/bfar.png" name="BFAR" class="max-lg:hidden" />
+
+        <flux:navbar class="-mb-px max-lg:hidden">
+            <flux:navbar.item icon="home" href="{{ route('client.home') }}" :current="request()->routeIs('client.home')">Home</flux:navbar.item>
+            <flux:navbar.item icon="document-text" href="{{ route('client.history') }}" :current="request()->routeIs('client.history')">Documents</flux:navbar.item>
+            <flux:navbar.item icon="calendar" href="{{ route('client.booking') }}" :current="request()->routeIs('client.booking')">Calendar</flux:navbar.item>
+        </flux:navbar>
+
+        <flux:spacer />
+        <flux:dropdown position="top" align="start">
+            <flux:profile avatar="https://fluxui.dev/img/demo/user.png" />
+            <flux:menu>
+                <flux:button x-data x-on:click="$flux.dark = ! $flux.dark">
+                    <template x-if="$flux.dark">
+                        <flux:icon name="moon" />
+                    </template>
+                    <template x-if="!$flux.dark">
+                        <flux:icon name="sun" />
+                    </template>
+                </flux:button>
+                <flux:menu.separator />
+                <flux:menu.item icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+            </flux:menu>
+        </flux:dropdown>
+    </flux:header>
+
+
+
+    <flux:sidebar sticky collapsible="mobile"
+        class="lg:hidden bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
+        <flux:sidebar.header>
+            <flux:sidebar.brand href="{{ route('client.home') }}" logo="/images/bfar.png"
+                 name="BFAR" />
+            <flux:sidebar.collapse
+                class="in-data-flux-sidebar-on-desktop:not-in-data-flux-sidebar-collapsed-desktop:-mr-2" />
+        </flux:sidebar.header>
+        <flux:sidebar.nav>
+            <flux:sidebar.item icon="home" href="{{ route('client.home') }}"
+                :current="request()->routeIs('client.home')">Home</flux:sidebar.item>
+            <flux:sidebar.item icon="document-text" href="{{ route('client.history') }}"
+                :current="request()->routeIs('client.history')">Documents</flux:sidebar.item>
+            <flux:sidebar.item icon="calendar" href="{{ route('client.booking') }}"
+                :current="request()->routeIs('client.booking')">Calendar</flux:sidebar.item>
+        </flux:sidebar.nav>
+        <flux:sidebar.spacer />
+        <flux:sidebar.nav>
+            <flux:sidebar.item>
+                <flux:button x-data x-on:click="$flux.dark = ! $flux.dark">
+                    <template x-if="$flux.dark">
+                        <flux:icon name="moon" />
+                    </template>
+                    <template x-if="!$flux.dark">
+                        <flux:icon name="sun" />
+                    </template>
+                </flux:button>
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
+            <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
+            <flux:sidebar.item icon="arrow-right-start-on-rectangle">Logout</flux:sidebar.item>
+        </flux:sidebar.nav>
+    </flux:sidebar>
+
+    <flux:main container>
+        @yield('content')
+    </flux:main>
+    @fluxScripts
+</body>
+
+</html>
