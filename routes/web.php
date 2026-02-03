@@ -28,9 +28,19 @@ Route::get('/admin/vehicle', function () {
 Route::get('/client/home', function () {
     return view('client.home');
 })->name('client.home');
-Route::get('/client/history', function () {
-    return view('client.history');
-})->name('client.history');
+
 Route::get('/client/booking', function () {
     return view('client.booking');
 })->name('client.booking');
+
+Route::get('/client/trip-ticket', function () {
+    return view('client.trip-ticket');
+})->name('client.trip-ticket');
+
+Route::get('/client/travel-order', function () {
+    return view('client.travel-order');
+})->name('client.travel-order');
+
+Route::get('/client/trip-history', function () {
+    return view('client.trip-history');
+})->name('client.trip-history');
