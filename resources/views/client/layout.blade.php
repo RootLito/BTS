@@ -47,21 +47,7 @@
 
 
         <flux:spacer />
-        <flux:dropdown position="top" align="start">
-            <flux:profile avatar="/images/bfar.png" />
-            <flux:menu>
-                <flux:button x-data x-on:click="$flux.dark = ! $flux.dark">
-                    <template x-if="$flux.dark">
-                        <flux:icon name="moon" />
-                    </template>
-                    <template x-if="!$flux.dark">
-                        <flux:icon name="sun" />
-                    </template>
-                </flux:button>
-                <flux:menu.separator />
-                <flux:menu.item icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
-            </flux:menu>
-        </flux:dropdown>
+        <flux:button variant="filled" icon="arrow-left-start-on-rectangle" color="red">Logout</flux:button>
     </flux:header>
 
 
@@ -102,19 +88,7 @@
 
         <flux:sidebar.spacer />
         <flux:sidebar.nav>
-            <flux:sidebar.item>
-                <flux:button x-data x-on:click="$flux.dark = ! $flux.dark">
-                    <template x-if="$flux.dark">
-                        <flux:icon name="moon" />
-                    </template>
-                    <template x-if="!$flux.dark">
-                        <flux:icon name="sun" />
-                    </template>
-                </flux:button>
-            </flux:sidebar.item>
-            <flux:sidebar.item icon="cog-6-tooth" href="#">Settings</flux:sidebar.item>
-            <flux:sidebar.item icon="information-circle" href="#">Help</flux:sidebar.item>
-            <flux:sidebar.item icon="arrow-right-start-on-rectangle">Logout</flux:sidebar.item>
+            <flux:button icon="arrow-down-tray">Export</flux:button>
         </flux:sidebar.nav>
     </flux:sidebar>
 
