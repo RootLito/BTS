@@ -31,10 +31,10 @@
 
             <flux:navbar.item icon="ticket" href="{{ route('client.trip-ticket') }}"
                 :current="request()->routeIs('client.trip-ticket')">
-                Trip Ticket
+                Booked Trips
             </flux:navbar.item>
 
-            <flux:navbar.item icon="document-text" href="{{ route('client.travel-order') }}"
+            {{-- <flux:navbar.item icon="document-text" href="{{ route('client.travel-order') }}"
                 :current="request()->routeIs('client.travel-order')">
                 Travel Order
             </flux:navbar.item>
@@ -42,56 +42,16 @@
             <flux:navbar.item icon="clock" href="{{ route('client.trip-history') }}"
                 :current="request()->routeIs('client.trip-history')">
                 Trip History
-            </flux:navbar.item>
+            </flux:navbar.item> --}}
         </flux:navbar>
-
-
         <flux:spacer />
-        <flux:button variant="filled" icon="arrow-left-start-on-rectangle" color="red">Logout</flux:button>
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <flux:button type="submit" variant="filled" icon="arrow-left-start-on-rectangle" color="red">
+                Logout
+            </flux:button>
+        </form>
     </flux:header>
-
-
-
-    <flux:sidebar sticky collapsible="mobile"
-        class="lg:hidden bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
-        <flux:sidebar.header>
-            <flux:sidebar.brand href="{{ route('client.home') }}" logo="/images/bfar.png" name="BFAR" />
-            <flux:sidebar.collapse
-                class="in-data-flux-sidebar-on-desktop:not-in-data-flux-sidebar-collapsed-desktop:-mr-2" />
-        </flux:sidebar.header>
-        <flux:sidebar.nav>
-            <flux:sidebar.item icon="home" href="{{ route('client.home') }}"
-                :current="request()->routeIs('client.home')">
-                Home
-            </flux:sidebar.item>
-
-            <flux:sidebar.item icon="calendar" href="{{ route('client.booking') }}"
-                :current="request()->routeIs('client.booking')">
-                Booking
-            </flux:sidebar.item>
-
-            <flux:sidebar.item icon="ticket" href="{{ route('client.trip-ticket') }}"
-                :current="request()->routeIs('client.trip-ticket')">
-                Trip Ticket
-            </flux:sidebar.item>
-
-            <flux:sidebar.item icon="document-text" href="{{ route('client.travel-order') }}"
-                :current="request()->routeIs('client.travel-order')">
-                Travel Order
-            </flux:sidebar.item>
-
-            <flux:sidebar.item icon="clock" href="{{ route('client.trip-history') }}"
-                :current="request()->routeIs('client.trip-history')">
-                Trip History
-            </flux:sidebar.item>
-        </flux:sidebar.nav>
-
-        <flux:sidebar.spacer />
-        <flux:sidebar.nav>
-            <flux:button icon="arrow-down-tray">Export</flux:button>
-        </flux:sidebar.nav>
-    </flux:sidebar>
-
     <flux:main container>
         @yield('content')
     </flux:main>

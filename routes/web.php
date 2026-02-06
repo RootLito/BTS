@@ -2,54 +2,56 @@
 
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\DriverController;
-use App\Http\Controllers\BookingController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TripTicketController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('portal');
+// Public Routes
+Route::get('/', function () { return view('portal'); });
+
+// Guest Only
+Route::middleware('guest')->group(function () {
+    Route::get('/admin-login', function () { return view('auth.admin-login'); })->name('admin.login');
+    Route::get('/client-login', function () { return view('auth.client-login'); })->name('client.login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard');
-})->name('admin.dashboard');
-Route::get('/admin/booking', function () {
-    return view('admin.booking');
-})->name('admin.booking');
-Route::get('admin/driver', [DriverController::class, 'index'])->name('admin.driver');
-Route::post('admin/driver', [DriverController::class, 'store'])->name('driver.store');
-Route::put('admin/driver/{driver}', [DriverController::class, 'update'])->name('driver.update');
-Route::delete('admin/driver/{driver}', [DriverController::class, 'destroy'])->name('driver.destroy');
-Route::get('admin/vehicle', [VehicleController::class, 'index'])->name('admin.vehicle');
-Route::post('admin/vehicle', [VehicleController::class, 'store'])->name('vehicle.store');
-Route::put('admin/vehicle/{vehicle}', [VehicleController::class, 'update'])->name('vehicle.update');
-Route::delete('admin/vehicle/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicle.destroy');
+// --- ADMIN PROTECTED ROUTES ---
+// Changed 'role:admin' to 'auth:admin' guard
+Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/booking', [TripTicketController::class, 'indexAdmin'])->name('admin.booking');
+    
+    // Drivers (All your original routes kept)
+    Route::get('/driver', [DriverController::class, 'index'])->name('admin.driver');
+    Route::post('/driver', [DriverController::class, 'store'])->name('driver.store');
+    Route::put('/driver/{driver}', [DriverController::class, 'update'])->name('driver.update');
+    Route::delete('/driver/{driver}', [DriverController::class, 'destroy'])->name('driver.destroy');
+    
+    // Vehicles (All your original routes kept)
+    Route::get('/vehicle', [VehicleController::class, 'index'])->name('admin.vehicle');
+    Route::post('/vehicle', [VehicleController::class, 'store'])->name('vehicle.store');
+    Route::put('/vehicle/{vehicle}', [VehicleController::class, 'update'])->name('vehicle.update');
+    Route::delete('/vehicle/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicle.destroy');
+});
 
-
-
-
-
-
-Route::get('/client/home', function () {
-    return view('client.home');
-})->name('client.home');
-
-Route::get('/client/booking', [BookingController::class, 'index'])->name('client.booking');
-
-Route::get('/client/trip-ticket', function () {
-    return view('client.trip-ticket');
-})->name('client.trip-ticket');
-Route::get('/trips', [TripTicketController::class, 'index'])->name('trips.index');
-Route::post('/trips', [TripTicketController::class, 'store'])->name('trips.store');
-Route::get('/trips/{tripTicket}', [TripTicketController::class, 'show'])->name('trips.show');
-Route::put('/trips/{tripTicket}', [TripTicketController::class, 'update'])->name('trips.update');
-Route::delete('/trips/{tripTicket}', [TripTicketController::class, 'destroy'])->name('trips.destroy');
-
-Route::get('/client/travel-order', function () {
-    return view('client.travel-order');
-})->name('client.travel-order');
-
-Route::get('/client/trip-history', function () {
-    return view('client.trip-history');
-})->name('client.trip-history');
+// --- CLIENT PROTECTED ROUTES ---
+// Changed 'role:client' to 'auth:client' guard
+Route::middleware(['auth:client'])->prefix('client')->group(function () {
+    Route::get('/home', function () { return view('client.home'); })->name('client.home');
+    
+    // Bookings (All your original routes kept)
+    Route::get('/booking', [TripTicketController::class, 'index'])->name('client.booking');
+    Route::post('/booking', [TripTicketController::class, 'store'])->name('trips.store');
+    Route::get('/booking/{tripTicket}', [TripTicketController::class, 'show'])->name('trips.show');
+    Route::put('/booking/{tripTicket}', [TripTicketController::class, 'update'])->name('trips.update');
+    Route::delete('/booking/{tripTicket}', [TripTicketController::class, 'destroy'])->name('trips.destroy');
+    
+    // Other Client Pages (All your original routes kept)
+    Route::get('/trip-ticket', [TripTicketController::class, 'tripTicket'])->name('client.trip-ticket');
+    Route::get('/travel-order', function () { return view('client.travel-order'); })->name('client.travel-order');
+    Route::get('/trip-history', function () { return view('client.trip-history'); })->name('client.trip-history');
+});

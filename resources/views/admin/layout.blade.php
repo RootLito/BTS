@@ -25,7 +25,7 @@
         <flux:sidebar.nav>
             <flux:sidebar.item icon="home" href="{{ route('admin.dashboard') }}" class="py-2">Dashboard
             </flux:sidebar.item>
-            <flux:sidebar.item icon="ticket" href="{{ route('admin.booking') }}">Booking</flux:sidebar.item>
+            <flux:sidebar.item icon="ticket" href="{{ route('admin.booking') }}">Booked Trips</flux:sidebar.item>
             <flux:sidebar.item icon="user" href="{{ route('admin.driver') }}">Driver</flux:sidebar.item>
             <flux:sidebar.item icon="truck" href="{{ route('admin.vehicle') }}">Vehicle</flux:sidebar.item>
         </flux:sidebar.nav>
@@ -33,16 +33,12 @@
 
         <flux:sidebar.spacer />
 
-        <flux:dropdown position="top" align="start" class="max-lg:hidden">
-            <form method="get" action="{{ '/' }}">
-                @csrf
-
-                <flux:sidebar.item icon="arrow-right-start-on-rectangle" as="button" type="submit" class="">
-                    Logout
-                </flux:sidebar.item>
-            </form>
-
-        </flux:dropdown>
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <flux:button type="submit" variant="filled" color="red" icon="arrow-left-start-on-rectangle" class="w-full">
+                Logout
+            </flux:button>
+        </form>
     </flux:sidebar>
 
     <flux:header class="lg:hidden">

@@ -6,28 +6,11 @@
 
 
 <div class="my-10 flex gap-2">
-    <flux:input icon="magnifying-glass" placeholder="Search vehicles" />
-    {{-- <flux:dropdown>
-        <flux:button icon:trailing="chevron-down">Sort by name</flux:button>
+    <div class="w-100">
+        <flux:input icon="magnifying-glass" placeholder="Search vehicles" />
+    </div>
+    <flux:spacer />
 
-        <flux:menu>
-            <flux:menu.radio.group wire:model="sortBy">
-                <flux:menu.radio>Ascending</flux:menu.radio>
-                <flux:menu.radio>Descending</flux:menu.radio>
-            </flux:menu.radio.group>
-        </flux:menu>
-    </flux:dropdown>
-    <flux:dropdown>
-        <flux:button icon:trailing="chevron-down">Sort by availability</flux:button>
-
-        <flux:menu>
-            <flux:menu.radio.group wire:model="sortBy">
-                <flux:menu.radio checked>Available</flux:menu.radio>
-                <flux:menu.radio>On Trip</flux:menu.radio>
-                <flux:menu.radio>Maintainance</flux:menu.radio>
-            </flux:menu.radio.group>
-        </flux:menu>
-    </flux:dropdown> --}}
     <flux:modal.trigger name="add-vehicle">
         <flux:button variant="primary" color="emerald" icon="plus">
             Add Vehicle
@@ -87,10 +70,12 @@
                 <flux:table.cell class="shrink-0">
                     <div class="flex items-center gap-2">
                         <flux:modal.trigger name="edit-vehicle-{{ $vehicle->id }}">
-                            <flux:button variant="primary" size="sm" icon="pencil-square" inset="top bottom">Update</flux:button>
+                            <flux:button variant="primary" size="sm" icon="pencil-square" inset="top bottom">Update
+                            </flux:button>
                         </flux:modal.trigger>
                         <flux:modal.trigger name="confirm-delete-veh-{{ $vehicle->id }}">
-                            <flux:button variant="primary" color="red" size="sm" icon="trash" inset="top bottom">Delete</flux:button>
+                            <flux:button variant="primary" color="red" size="sm" icon="trash" inset="top bottom">Delete
+                            </flux:button>
                         </flux:modal.trigger>
                     </div>
 

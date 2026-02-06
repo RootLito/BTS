@@ -14,42 +14,25 @@
 </head>
 
 <body>
-    <div class="w-full h-screen grid place-items-center">
-
-        <flux:card class="space-y-6">
+    <div class="w-full h-screen grid place-items-center bg-cover bg-center bg-no-repeat"
+        style="background-image: url('{{ asset('images/pic.jpg') }}');">
+        <flux:card class="space-y-6 w-100">
+            <img src="{{ asset('images/bfar.png') }}" alt="BFAR Logo" width="150" class="mx-auto">
             <div>
-                <flux:heading size="lg">Log in to your account</flux:heading>
-                <flux:text class="mt-2">Welcome back!</flux:text>
+                <flux:heading size="lg" class="text-center">Booking and Ticketing System</flux:heading>
+                <flux:text class="mt-2" class="text-center">BFAR Booking and Ticket Management</flux:text>
             </div>
+            <flux:separator text="Login as" />
+            <div class="w-full flex gap-4">
+                <flux:button href="{{ route('client.login') }}" variant="outline" class="flex-1">
+                    Client
+                </flux:button>
 
-            <div class="space-y-6">
-                <flux:input label="Email" type="email" placeholder="Your email address" />
-
-                <flux:field>
-                    <div class="mb-3 flex justify-between">
-                        <flux:label>Password</flux:label>
-
-                        <flux:link href="#" variant="subtle" class="text-sm">Forgot password?</flux:link>
-                    </div>
-
-                    <flux:input type="password" placeholder="Your password" />
-
-                    <flux:error name="password" />
-                </flux:field>
-            </div>
-
-            <div class="space-y-2">
-                <flux:button variant="primary" class="w-full">Log in</flux:button>
-
-                <flux:button variant="ghost" class="w-full">Sign up for a new account</flux:button>
+                <flux:button href="{{ route('admin.login') }}" variant="primary" color="sky" class="flex-1">
+                    Admin
+                </flux:button>
             </div>
         </flux:card>
-
-
-        <div class="flex gap-4">
-            <a href="{{ route('client.home') }}">Client</a>
-            <a href="{{ route('admin.dashboard') }}">Admin</a>
-        </div>
     </div>
     @fluxScripts
 </body>

@@ -9,9 +9,10 @@ class Driver extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name', 
-        'contact', 
-        'status'
-    ];
+    protected $fillable = ['name', 'contact', 'status', 'vehicle_id'];
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
 }

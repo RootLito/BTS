@@ -5,8 +5,9 @@
 <flux:text class="mt-2 mb-6 text-base">Manage drivers information</flux:text>
 
 <div class="my-10 flex gap-2">
-    <flux:input icon="magnifying-glass" placeholder="Search drivers" class="w-100" />
-
+    <div class="w-100">
+        <flux:input icon="magnifying-glass" placeholder="Search drivers" />
+    </div>
     <flux:spacer />
 
     {{-- CREATE MODAL --}}
@@ -23,6 +24,17 @@
             </div>
             <flux:input label="Name" name="name" placeholder="Full Name" required />
             <flux:input label="Contact Number" type="tel" name="contact" placeholder="09XXXXXXXXX" required />
+            <flux:select label="Assign Vehicle" name="vehicle_id" placeholder="Select a vehicle...">
+                <option value="">No Vehicle Assigned</option>
+                @foreach($vehicles as $vehicle)
+                @php
+                $isAssigned = in_array($vehicle->id, $assignedVehicleIds);
+                @endphp
+                <option value="{{ $vehicle->id }}" {{ $isAssigned ? 'disabled' : '' }}>
+                    {{ $vehicle->vehicle }} ({{ $vehicle->plate_no }}) {{ $isAssigned ? '— Already Assigned' : '' }}
+                </option>
+                @endforeach
+            </flux:select>
 
             <div class="flex">
                 <flux:spacer />
@@ -44,7 +56,18 @@
         <flux:table.rows>
             @forelse($drivers as $driver)
             <flux:table.row>
-                <flux:table.cell>{{ $driver->name }}</flux:table.cell>
+                <flux:table.cell>
+                    <div class="flex flex-col">
+                        <span class="font-medium text-zinc-800 dark:text-white">{{ $driver->name }}</span>
+                        @if($driver->vehicle)
+                        <span class="text-xs text-zinc-500">
+                            {{ $driver->vehicle->vehicle }} — {{ $driver->vehicle->plate_no }}
+                        </span>
+                        @else
+                        <span class="text-xs text-zinc-400 italic">No vehicle assigned</span>
+                        @endif
+                    </div>
+                </flux:table.cell>
                 <flux:table.cell variant="strong">{{ $driver->contact }}</flux:table.cell>
                 <flux:table.cell>
                     @php
@@ -78,6 +101,22 @@
                             <flux:heading size="lg">Update Driver</flux:heading>
                             <flux:input label="Name" name="name" value="{{ $driver->name }}" />
                             <flux:input label="Contact" name="contact" value="{{ $driver->contact }}" />
+                            <flux:select label="Assign Vehicle" name="vehicle_id">
+                                <option value="">No Vehicle Assigned</option>
+                                @foreach($vehicles as $vehicle)
+                                @php
+                                $isAssignedToOthers = in_array($vehicle->id, $assignedVehicleIds) && $driver->vehicle_id
+                                != $vehicle->id;
+                                @endphp
+                                <option value="{{ $vehicle->id }}" {{ $driver->vehicle_id == $vehicle->id ? 'selected' :
+                                    '' }}
+                                    {{ $isAssignedToOthers ? 'disabled' : '' }}>
+
+                                    {{ $vehicle->vehicle }} ({{ $vehicle->plate_no }})
+                                    {{ $isAssignedToOthers ? '— Already Assigned' : '' }}
+                                </option>
+                                @endforeach
+                            </flux:select>
                             <flux:select label="Status" name="status">
                                 <option value="Available" {{ $driver->status == 'Available' ? 'selected' : ''
                                     }}>Available</option>
