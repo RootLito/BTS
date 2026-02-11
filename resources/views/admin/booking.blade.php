@@ -110,10 +110,8 @@
                         </flux:badge>
                     </flux:table.cell>
                     <flux:table.cell>
-                        <div class="flex justify-end gap-2">
-                            <flux:button icon="eye" size="xs" variant="subtle" />
-                            <flux:button icon="pencil-square" size="xs" variant="subtle" />
-                        </div>
+                        <flux:button href="{{ route('admin.booking.show', $ticket->id) }}" icon="eye" size="xs"
+                            variant="filled">Full Details</flux:button>
                     </flux:table.cell>
                 </flux:table.row>
                 @empty

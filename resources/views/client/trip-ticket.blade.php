@@ -126,11 +126,46 @@
                         </flux:table.cell>
 
                         {{-- Actions --}}
+                        {{-- <flux:dropdown>
+                            <flux:button icon-trailing="chevron-down" variant="ghost">Actions</flux:button>
+
+                            <flux:menu>
+                                <flux:menu.item icon="eye" href="{{ route('trips.show', $trip->id) }}">
+                                    View
+                                </flux:menu.item>
+
+                                <flux:menu.separator />
+
+                                <flux:menu.item icon="ticket"
+                                    href="{{ route('client.trip-ticket', ['id' => $trip->id]) }}">
+                                    Trip Ticket
+                                </flux:menu.item>
+
+                                <flux:menu.item icon="document-text"
+                                    href="{{ route('client.travel-order', ['id' => $trip->id]) }}">
+                                    Travel Order
+                                </flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown> --}}
                         <flux:table.cell>
-                            <div class="flex justify-end gap-2">
-                                <flux:button icon="eye" size="xs" variant="subtle" />
-                                <flux:button icon="pencil-square" size="xs" variant="subtle" />
-                            </div>
+                            <flux:dropdown>
+                                <flux:button icon-trailing="chevron-down" class="text-sm">Actions</flux:button>
+                                <flux:menu>
+                                    <flux:menu.item icon="eye">
+                                        View
+                                    </flux:menu.item>
+
+                                    <flux:menu.item icon="ticket">
+                                        Trip Ticket
+                                    </flux:menu.item>
+
+                                    <flux:menu.item icon="document-text">
+                                        Travel Order
+                                    </flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item variant="danger" icon="trash">Delete</flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
                     @empty

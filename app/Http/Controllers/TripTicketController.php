@@ -32,7 +32,7 @@ class TripTicketController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 // $q->where('office', 'like', "%{$search}%")
-                    $q->orWhere('destination', 'like', "%{$search}%");
+                $q->orWhere('destination', 'like', "%{$search}%");
             });
         }
         if ($request->filled('start_date')) {
@@ -48,17 +48,27 @@ class TripTicketController extends Controller
         return view('admin.booking', compact('tickets', 'drivers', 'vehicles'));
     }
 
+    public function showAdmin(TripTicket $tripTicket)
+    {
+        $tripTicket->load(['driver', 'vehicle']);
+        $drivers = Driver::with('vehicle')->get();
+        return view('admin.booking-summary', compact('tripTicket', 'drivers'));
+    }
+
     public function tripTicket()
     {
         $tickets = TripTicket::with(['driver', 'vehicle'])
             ->latest()
-            ->paginate(9);
+            ->paginate(8);
 
         return view('client.trip-ticket', compact(
             'tickets',
         ));
     }
 
+
+
+    
     public function store(Request $request)
     {
         $request->merge([
@@ -79,14 +89,42 @@ class TripTicketController extends Controller
         return redirect()->route('client.booking')->with('status', 'Booking submitted successfully!');
     }
 
+
+
+
+    // public function update(Request $request, TripTicket $tripTicket)
+    // {
+    //     $validated = $request->validate([
+    //         'status' => 'required|string',
+    //     ]);
+
+    //     $tripTicket->update($validated);
+    //     return redirect()->back()->with('success', 'Trip Ticket updated!');
+    // }
+
     public function update(Request $request, TripTicket $tripTicket)
     {
         $validated = $request->validate([
-            'status' => 'required|string',
+            'status' => 'nullable|string|in:Pending,Approved,Cancelled,Completed',
+            'driver_id' => 'nullable|exists:drivers,id',
         ]);
 
+        // Handle Driver/Vehicle Assignment Logic
+        if ($request->filled('driver_id')) {
+            $driver = Driver::find($request->driver_id);
+            if ($driver) {
+                $validated['vehicle_id'] = $driver->vehicle_id;
+            }
+        }
+
         $tripTicket->update($validated);
-        return redirect()->back()->with('success', 'Trip Ticket updated!');
+
+        // Dynamic message based on what was updated
+        $message = $request->has('status')
+            ? "Trip status marked as {$request->status}!"
+            : "Assignment updated!";
+
+        return redirect()->back()->with('success', $message);
     }
 
     public function destroy(TripTicket $tripTicket)

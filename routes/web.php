@@ -24,6 +24,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/booking', [TripTicketController::class, 'indexAdmin'])->name('admin.booking');
+    Route::get('/booking/{tripTicket}', [TripTicketController::class, 'showAdmin'])->name('admin.booking.show');
     
     // Drivers (All your original routes kept)
     Route::get('/driver', [DriverController::class, 'index'])->name('admin.driver');

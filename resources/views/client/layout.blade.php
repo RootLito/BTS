@@ -34,6 +34,10 @@
                 Booked Trips
             </flux:navbar.item>
 
+            <flux:navbar.item icon="document-text" href="">
+                Documents
+            </flux:navbar.item>
+
             {{-- <flux:navbar.item icon="document-text" href="{{ route('client.travel-order') }}"
                 :current="request()->routeIs('client.travel-order')">
                 Travel Order
@@ -45,6 +49,7 @@
             </flux:navbar.item> --}}
         </flux:navbar>
         <flux:spacer />
+        <flux:icon.bell class="me-4"/>    
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <flux:button type="submit" variant="filled" icon="arrow-left-start-on-rectangle" color="red">

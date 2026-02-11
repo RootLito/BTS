@@ -37,9 +37,9 @@
                         title="Maintenance"></div>
                 </div>
                 <div class="flex gap-2">
-                    <flux:badge size="sm" color="emerald" inset="top bottom">{{ $availVehicles }} Avail</flux:badge>
-                    <flux:badge size="sm" color="yellow" inset="top bottom">{{ $tripVehicles }} Trip</flux:badge>
-                    <flux:badge size="sm" color="red" inset="top bottom">{{ $maintVehicles }} Maint</flux:badge>
+                    <flux:badge size="sm" color="emerald" inset="top bottom">{{ $availVehicles }} Available</flux:badge>
+                    <flux:badge size="sm" color="yellow" inset="top bottom">{{ $tripVehicles }} On Trip</flux:badge>
+                    <flux:badge size="sm" color="red" inset="top bottom">{{ $maintVehicles }} Maintenance</flux:badge>
                 </div>
             </div>
         </flux:card>
