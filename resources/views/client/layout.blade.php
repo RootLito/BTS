@@ -30,13 +30,13 @@
             </flux:navbar.item>
 
             <flux:navbar.item icon="ticket" href="{{ route('client.trip-ticket') }}"
-                :current="request()->routeIs('client.trip-ticket')">
+                :current="request()->routeIs('client.trip-ticket*')">
                 Booked Trips
             </flux:navbar.item>
 
-            <flux:navbar.item icon="document-text" href="">
+            {{-- <flux:navbar.item icon="document-text" href="">
                 Documents
-            </flux:navbar.item>
+            </flux:navbar.item> --}}
 
             {{-- <flux:navbar.item icon="document-text" href="{{ route('client.travel-order') }}"
                 :current="request()->routeIs('client.travel-order')">

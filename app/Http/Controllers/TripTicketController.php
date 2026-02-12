@@ -31,7 +31,6 @@ class TripTicketController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                // $q->where('office', 'like', "%{$search}%")
                 $q->orWhere('destination', 'like', "%{$search}%");
             });
         }
@@ -55,25 +54,37 @@ class TripTicketController extends Controller
         return view('admin.booking-summary', compact('tripTicket', 'drivers'));
     }
 
-    public function tripTicket()
+    public function tripTicket(Request $request)
     {
-        $tickets = TripTicket::with(['driver', 'vehicle'])
-            ->latest()
-            ->paginate(8);
+        $query = TripTicket::with(['driver', 'vehicle'])
+            ->where('client_id', auth()->id());
 
-        return view('client.trip-ticket', compact(
-            'tickets',
-        ));
+        $query->when($request->search, function ($q, $search) {
+            $q->where(function ($inner) use ($search) {
+                $inner->where('destination', 'like', "%{$search}%")
+                    ->orWhere('purpose', 'like', "%{$search}%");
+            });
+        });
+
+        $sortOrder = $request->get('sort', 'latest');
+        if ($sortOrder === 'oldest') {
+            $query->oldest();
+        } else {
+            $query->latest();
+        }
+
+        $tickets = $query->paginate(8)->withQueryString();
+
+        return view('client.trip-ticket', compact('tickets'));
     }
 
 
-
-    
     public function store(Request $request)
     {
         $request->merge([
             'passengers' => json_decode($request->passengers, true)
         ]);
+
         $validated = $request->validate([
             'purpose' => 'required|string',
             'destination' => 'required|string',
@@ -83,7 +94,10 @@ class TripTicketController extends Controller
             'driver_id' => 'exists:drivers,id',
             'vehicle_id' => 'exists:vehicles,id',
         ]);
+        $validated['client_id'] = auth()->id();
+        $validated['office'] = auth()->user()->office;
         $validated['status'] = 'Pending';
+
         TripTicket::create($validated);
 
         return redirect()->route('client.booking')->with('status', 'Booking submitted successfully!');
@@ -132,4 +146,8 @@ class TripTicketController extends Controller
         $tripTicket->delete();
         return redirect()->back()->with('success', 'Trip Ticket deleted!');
     }
+
+
+
+ 
 }

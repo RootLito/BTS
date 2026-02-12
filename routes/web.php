@@ -53,6 +53,16 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     
     // Other Client Pages (All your original routes kept)
     Route::get('/trip-ticket', [TripTicketController::class, 'tripTicket'])->name('client.trip-ticket');
+    Route::get('/trip-ticket/ticket', function () { 
+        return view('client.ticket');
+    })->name('client.trip-ticket.ticket');
+    Route::get('/trip-ticket/to', function () { 
+        return view('client.travel-order');
+    })->name('client.trip-ticket.to');
+
+
+
+    
     Route::get('/travel-order', function () { return view('client.travel-order'); })->name('client.travel-order');
     Route::get('/trip-history', function () { return view('client.trip-history'); })->name('client.trip-history');
 });

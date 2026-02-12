@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TripTicket extends Model
 {
     protected $fillable = [
+        'client_id',
+        'office',     
         'purpose',
         'destination',
         'start_date',
@@ -24,11 +26,13 @@ class TripTicket extends Model
         'end_date' => 'date',
     ];
 
-    public function driver(): BelongsTo {
+    public function driver(): BelongsTo
+    {
         return $this->belongsTo(Driver::class);
     }
 
-    public function vehicle(): BelongsTo {
+    public function vehicle(): BelongsTo
+    {
         return $this->belongsTo(Vehicle::class);
     }
 }
