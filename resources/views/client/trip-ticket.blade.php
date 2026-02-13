@@ -42,7 +42,6 @@
                 @endif
             </div>
 
-
             <flux:button href="{{ route('client.booking') }}" variant="primary" color="emerald" icon="plus"
                 class="ms-auto">
                 New Booking
@@ -66,12 +65,9 @@
                     <flux:table.row>
                         <flux:table.cell>
                             <div class="flex flex-col">
-                                <span class="font-medium text-zinc-800 dark:text-white">{{ $ticket->destination
-                                    }}</span>
+                                <span class="font-medium text-zinc-800 dark:text-white">{{ $ticket->destination }}</span>
                                 <span class="text-xs text-zinc-500 truncate max-w-[200px]">{{ $ticket->purpose }}</span>
                             </div>
-
-
                         </flux:table.cell>
 
                         <flux:table.cell class="whitespace-nowrap">
@@ -87,14 +83,12 @@
                                     {{ \Carbon\Carbon::parse($ticket->end_date)->format('l') }}
                                 </span>
                             </div>
-
                         </flux:table.cell>
 
                         <flux:table.cell>
                             <div class="flex flex-col text-sm">
                                 <span>{{ $ticket->driver->name ?? 'No Driver' }}</span>
-                                <span class="text-xs text-zinc-400">{{ $ticket->vehicle->vehicle ?? 'No Vehicle'
-                                    }}</span>
+                                <span class="text-xs text-zinc-400">{{ $ticket->vehicle->vehicle ?? 'No Vehicle' }}</span>
                             </div>
                         </flux:table.cell>
 
@@ -103,7 +97,6 @@
                             $passengerList = is_array($ticket->passengers)
                             ? $ticket->passengers
                             : json_decode($ticket->passengers ?? '[]', true);
-
                             $extraCount = count($passengerList) - 1;
                             @endphp
 
@@ -137,14 +130,17 @@
                             <flux:badge color="{{ $statusColor }}" size="sm" inset="top bottom">{{ $ticket->status }}
                             </flux:badge>
                         </flux:table.cell>
+
                         <flux:table.cell>
                             <flux:dropdown>
                                 <flux:button icon-trailing="chevron-down" class="text-sm">Actions</flux:button>
                                 <flux:menu>
+                                    {{-- CORRECTED VIEW TRIGGER --}}
                                     <flux:menu.item icon="eye"
-                                        x-on:click="$dispatch('open-modal', { name: 'view-ticket', ticket: {{ json_encode($ticket) }} })">
+                                        x-on:click="$dispatch('open-modal', { name: 'view-ticket', ticket: {{ json_encode($ticket) }} }); $flux.modal('view-ticket').show()">
                                         View
                                     </flux:menu.item>
+
                                     <flux:menu.item icon="ticket" href="{{ route('client.trip-ticket.ticket') }}">
                                         Trip Ticket
                                     </flux:menu.item>
@@ -152,8 +148,10 @@
                                         Travel Order
                                     </flux:menu.item>
                                     <flux:menu.separator />
+
+                                    {{-- CORRECTED DELETE TRIGGER --}}
                                     <flux:menu.item variant="danger" icon="trash"
-                                        x-on:click="$dispatch('open-modal', { name: 'delete-ticket', id: {{ $ticket->id }} })">
+                                        x-on:click="$dispatch('open-modal', { name: 'delete-ticket', id: {{ $ticket->id }} }); $flux.modal('delete-ticket').show()">
                                         Delete
                                     </flux:menu.item>
                                 </flux:menu>
@@ -166,8 +164,7 @@
                             <div class="flex flex-col items-center justify-center space-y-2">
                                 <flux:icon name="map" class="size-8 text-zinc-400" />
                                 <flux:text variant="strong" class="text-zinc-500">No trip tickets found</flux:text>
-                                <flux:text size="sm" class="text-zinc-400">Your scheduled bookings will appear here.
-                                </flux:text>
+                                <flux:text size="sm" class="text-zinc-400">Your scheduled bookings will appear here.</flux:text>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>
@@ -178,6 +175,8 @@
         {{ $tickets->links() }}
     </div>
 </div>
+
+{{-- MODALS --}}
 
 <flux:modal name="view-ticket" class="md:w-[600px]">
     <div x-data="{ ticket: {} }"
@@ -190,7 +189,7 @@
         <div class="grid grid-cols-2 gap-6">
             <flux:field>
                 <flux:label>Destination</flux:label>
-                <flux:text x-text="ticket.destination" class="font-medium text-zinc-800" />
+                <flux:text x-text="ticket.destination || 'N/A'" class="font-medium text-zinc-800" />
             </flux:field>
 
             <flux:field>
@@ -202,7 +201,7 @@
 
             <flux:field class="col-span-2">
                 <flux:label>Purpose</flux:label>
-                <flux:text x-text="ticket.purpose" />
+                <flux:text x-text="ticket.purpose || 'No purpose provided'" />
             </flux:field>
 
             <flux:field>
@@ -227,7 +226,6 @@
 <flux:modal name="delete-ticket" class="min-w-[400px]">
     <div x-data="{ deleteRoute: '' }"
         x-on:open-modal.window="if($event.detail.name === 'delete-ticket') deleteRoute = '/client/booking/' + $event.detail.id">
-
         <form :action="deleteRoute" method="POST" class="space-y-6">
             @csrf
             @method('DELETE')

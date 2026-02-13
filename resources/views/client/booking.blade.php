@@ -95,18 +95,18 @@
 
 
                     <div x-data="{ 
-                passengers: [], 
-                newName: '',
-                add() {
-                    if (this.newName.trim() !== '') {
-                        this.passengers.push(this.newName.trim());
-                        this.newName = '';
-                    }
-                },
-                remove(index) {
-                    this.passengers.splice(index, 1);
-                }
-            }" class="mb-2">
+                            passengers: [], 
+                            newName: '',
+                            add() {
+                                if (this.newName.trim() !== '') {
+                                    this.passengers.push(this.newName.trim());
+                                    this.newName = '';
+                                }
+                            },
+                            remove(index) {
+                                this.passengers.splice(index, 1);
+                            }
+                        }" class="mb-2">
                         <flux:label class="mb-2">Authorized Passengers</flux:label>
 
                         <flux:modal.trigger name="passenger_modal">
@@ -138,7 +138,7 @@
 
                             <div class="flex gap-2">
                                 <flux:input x-model="newName" @keydown.enter.prevent="add()" class="w-full"
-                                    placeholder="Type name..." x-on:click.stop />
+                                    placeholder="Type name, Position" x-on:click.stop />
                                 <flux:button @click="add()" variant="primary" color="emerald">Add</flux:button>
                             </div>
 

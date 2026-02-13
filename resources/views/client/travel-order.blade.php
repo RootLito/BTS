@@ -1,38 +1,20 @@
 @extends('client.layout')
 
 @section('content')
-<div class="w-full h-full flex flex-col">
-    <flux:heading size="xl" level="1">Travel Order</flux:heading>
-    <flux:text class="mt-2 mb-6 text-base">View and manage all your travel orders</flux:text>
+<div class="fixed inset-0 top-[65px] overflow-y-auto">
 
-
-    <div class="flex-1 ">
-        <div class="flex gap-2">
-            <flux:input icon="magnifying-glass" placeholder="Search orders" />
-            <flux:dropdown>
-                <flux:button icon:trailing="chevron-down">Sort by</flux:button>
-
-                <flux:menu>
-                    <flux:menu.radio.group wire:model="sortBy">
-                        <flux:menu.radio checked>Latest activity</flux:menu.radio>
-                        <flux:menu.radio>Date created</flux:menu.radio>
-                        <flux:menu.radio>Most popular</flux:menu.radio>
-                    </flux:menu.radio.group>
-                </flux:menu>
-            </flux:dropdown>
-            <flux:dropdown>
-                <flux:button icon:trailing="chevron-down">Sort by</flux:button>
-
-                <flux:menu>
-                    <flux:menu.radio.group wire:model="sortBy">
-                        <flux:menu.radio checked>Latest activity</flux:menu.radio>
-                        <flux:menu.radio>Date created</flux:menu.radio>
-                        <flux:menu.radio>Most popular</flux:menu.radio>
-                    </flux:menu.radio.group>
-                </flux:menu>
-            </flux:dropdown>
-            <flux:button variant="primary" color="emerald">Filter</flux:button>
-        </div>
+    <div class="w-[8.5in] h-10 mx-auto my-4 flex justify-between items-center">
+        <flux:button icon="arrow-uturn-left" variant="filled" color="red" href="{{ route('client.trip-ticket') }}">Back</flux:button>
+        <flux:text class="text-base">Travel Order</flux:text>
+        <flux:button icon="printer" variant="primary" color="emerald">Print</flux:button>
     </div>
+
+
+    <div
+        class="printable-folio bg-white mx-auto shadow-lg border border-gray-200 print:shadow-none print:border-none mb-4">
+        <img src="{{ asset('images/top.png') }}" alt="Travel Order Header" class="top">
+        <img src="{{ asset('images/bot.png') }}" alt="Travel Order Footer" class="bot">
+    </div>
+
 </div>
 @endsection
