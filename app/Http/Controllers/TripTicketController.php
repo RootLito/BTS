@@ -105,25 +105,12 @@ class TripTicketController extends Controller
 
 
 
-
-    // public function update(Request $request, TripTicket $tripTicket)
-    // {
-    //     $validated = $request->validate([
-    //         'status' => 'required|string',
-    //     ]);
-
-    //     $tripTicket->update($validated);
-    //     return redirect()->back()->with('success', 'Trip Ticket updated!');
-    // }
-
     public function update(Request $request, TripTicket $tripTicket)
     {
         $validated = $request->validate([
             'status' => 'nullable|string|in:Pending,Approved,Cancelled,Completed',
             'driver_id' => 'nullable|exists:drivers,id',
         ]);
-
-        // Handle Driver/Vehicle Assignment Logic
         if ($request->filled('driver_id')) {
             $driver = Driver::find($request->driver_id);
             if ($driver) {
@@ -132,8 +119,6 @@ class TripTicketController extends Controller
         }
 
         $tripTicket->update($validated);
-
-        // Dynamic message based on what was updated
         $message = $request->has('status')
             ? "Trip status marked as {$request->status}!"
             : "Assignment updated!";
@@ -149,5 +134,28 @@ class TripTicketController extends Controller
 
 
 
- 
+
+
+    public function showTicket(TripTicket $tripTicket)
+    {
+        $tripTicket->load(['driver', 'vehicle']);
+        return view('client.ticket', compact('tripTicket'));
+    }
+
+    // 2. Update your update method to allow the new fields
+    public function addInfo(Request $request, TripTicket $tripTicket)
+    {
+        $validated = $request->validate([
+            'purpose2' => 'nullable|string',
+            'passengers2' => 'nullable|string',
+            'supervisor' => 'nullable|string',
+        ]);
+
+        $tripTicket->update($validated);
+
+        return redirect()->back()->with('success', 'Details added successfully!');
+    }
+
+
+    
 }

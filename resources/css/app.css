@@ -110,34 +110,28 @@
         margin: 0;
     }
 
-    body * {
-        visibility: hidden;
-    }
-
-    .printable-folio, 
-    .printable-folio * {
-        visibility: visible;
-    }
-
     .printable-folio {
-        position: absolute;
-        left: 0;
-        top: 0;
+        position: relative !important;
         width: 8.5in;
-        height: 13in;
-        margin: 0;
-        padding: 0;
-        border: none;
-        box-shadow: none;
+        min-height: 13in;
+        height: auto !important; 
+        margin: 0 auto;
+        padding-bottom: 50px; 
+        display: block;
     }
 
-    .fixed.inset-0 {
-        position: static !important;
-        overflow: visible !important;
+    .bot {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
     }
-    
-    body {
-        background: white;
+
+    .details-footer {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        display: block;
+        position: relative;
     }
 }
 

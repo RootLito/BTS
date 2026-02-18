@@ -86,7 +86,7 @@
 
 
                     <flux:textarea label="Purpose" resize="none" class="mb-2" name="purpose" />
-                    <flux:input type="text" label="Destination" class="mb-2" name="destination" />
+                    <flux:input type="text" label="Destination" class="mb-2" name="destination" placeholder="Ex: REGION XII, GENERAL SANTOS CITY"/>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
                         <flux:input type="date" label="Start date" x-model="selection.displayStart" name="start_date" />
                         <flux:input type="date" label="End date" x-model="selection.displayEnd" name="end_date" />

@@ -65,7 +65,8 @@
                     <flux:table.row>
                         <flux:table.cell>
                             <div class="flex flex-col">
-                                <span class="font-medium text-zinc-800 dark:text-white">{{ $ticket->destination }}</span>
+                                <span class="font-medium text-zinc-800 dark:text-white">{{ $ticket->destination
+                                    }}</span>
                                 <span class="text-xs text-zinc-500 truncate max-w-[200px]">{{ $ticket->purpose }}</span>
                             </div>
                         </flux:table.cell>
@@ -88,7 +89,8 @@
                         <flux:table.cell>
                             <div class="flex flex-col text-sm">
                                 <span>{{ $ticket->driver->name ?? 'No Driver' }}</span>
-                                <span class="text-xs text-zinc-400">{{ $ticket->vehicle->vehicle ?? 'No Vehicle' }}</span>
+                                <span class="text-xs text-zinc-400">{{ $ticket->vehicle->vehicle ?? 'No Vehicle'
+                                    }}</span>
                             </div>
                         </flux:table.cell>
 
@@ -141,10 +143,12 @@
                                         View
                                     </flux:menu.item>
 
-                                    <flux:menu.item icon="ticket" href="{{ route('client.trip-ticket.ticket') }}">
+                                    <flux:menu.item icon="ticket"
+                                        href="{{ route('client.trip-ticket.ticket', $ticket->id) }}">
                                         Trip Ticket
                                     </flux:menu.item>
-                                    <flux:menu.item icon="document-text" href="{{ route('client.trip-ticket.to') }}">
+                                    <flux:menu.item icon="document-text"
+                                        href="{{ route('client.travel-order.show', $ticket->id) }}">
                                         Travel Order
                                     </flux:menu.item>
                                     <flux:menu.separator />
@@ -164,7 +168,8 @@
                             <div class="flex flex-col items-center justify-center space-y-2">
                                 <flux:icon name="map" class="size-8 text-zinc-400" />
                                 <flux:text variant="strong" class="text-zinc-500">No trip tickets found</flux:text>
-                                <flux:text size="sm" class="text-zinc-400">Your scheduled bookings will appear here.</flux:text>
+                                <flux:text size="sm" class="text-zinc-400">Your scheduled bookings will appear here.
+                                </flux:text>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

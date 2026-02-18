@@ -18,6 +18,9 @@ class TripTicket extends Model
         'driver_id',
         'vehicle_id',
         'status',
+        'supervisor',
+        'passengers2',
+        'purpose2',
     ];
 
     protected $casts = [
