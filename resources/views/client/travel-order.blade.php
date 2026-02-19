@@ -23,12 +23,17 @@
                 <h1 class="text-[16pt] font-bold leading-none uppercase my-4">TRAVEL ORDER</h1>
             </div>
 
-            <div class="flex justify-end text-[11pt] leading-none mb-4">
-                <div class="w-64">
-                    <div class="flex mb-1">
+            <div class="flex justify-end text-[11pt] leading-none mb-8">
+                <div class="w-48">
+                    <div class="flex mb-1 justify-between">
                         <span class="font-bold">TO No.:</span>
-                        <span class="flex-1 border-b border-black ml-1 uppercase">{{ $travelOrder->travel_order_no
-                            }}</span>
+                        <span class="border-b border-black uppercase w-32 ms-auto"></span>
+                    </div>
+                    <div class="flex mb-1 justify-between">
+                        <span class="font-bold">Date:</span>
+                        <span class="border-b border-black font-bold w-32 ms-auto text-center">
+                            {{ $travelOrder->date ? $travelOrder->date->format('F d, Y') : '' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -83,10 +88,23 @@
 
                     <div class="flex flex-col">
                         <span class="font-bold">Specific Purpose of the Trip:</span>
-                        <div class="mt-1 border-b border-black py-1 uppercase min-h-[2.5rem]">
+                        <div class="mt-1 border-b border-black py-1 uppercase ms-26 mt-2">
+                            {{ $travelOrder->purpose }}
+                        </div>
+                        <div class="mt-1 border-b border-black py-1 uppercase ms-26">
+                            {{ $travelOrder->purpose }}
+                        </div>
+                        <div class="mt-1 border-b border-black py-1 uppercase ms-26">
+                            {{ $travelOrder->purpose }}
+                        </div>
+                        <div class="mt-1 border-b border-black py-1 uppercase ms-26">
+                            {{ $travelOrder->purpose }}
+                        </div>
+                        <div class="mt-1 border-b border-black py-1 uppercase ms-26">
                             {{ $travelOrder->purpose }}
                         </div>
                     </div>
+
 
                     {{-- REMARKS & OBJECTIVES SECTION --}}
                     <div class="space-y-2">
@@ -111,17 +129,24 @@
                     {{-- SIGNATORIES --}}
                     <div class="grid grid-cols-2 gap-20 text-center mt-12 px-10 leading-none">
                         <div>
-                            <p class="text-[10pt] mb-10 text-left pl-4">Recommended by:</p>
+                            <p class="text-[12pt] mb-10 text-left pl-4">Recommended by:</p>
+
                             @foreach($travelOrder->recommended_by ?? [] as $recommender)
-                            <p class="font-bold underline text-[11pt] uppercase">{{ $recommender }}</p>
-                            <p class="text-[10pt] mt-1 italic mb-4 last:mb-0">Chief/Supervisor</p>
+                            <div class="mb-6 last:mb-0">
+                                <p class="font-bold underline text-[11pt] uppercase">
+                                    {{ $recommender['name'] ?? '' }}
+                                </p>
+                                <p class="text-[12pt] mt-1">
+                                    {{ $recommender['position'] ?? 'Chief/Supervisor' }}
+                                </p>
+                            </div>
                             @endforeach
                         </div>
                         <div>
-                            <p class="text-[10pt] mb-10 text-left pl-4">Approved by:</p>
+                            <p class="text-[12pt] mb-10 text-left pl-4">Approved by:</p>
                             <p class="font-bold underline text-[11pt] uppercase">{{ $travelOrder->approved_by ?? 'RELLY
                                 B. GARCIA' }}</p>
-                            <p class="text-[10pt] mt-1 italic">Regional Director</p>
+                            <p class="text-[12pt] mt-1 ">Regional Director</p>
                         </div>
                     </div>
                 </div>
@@ -136,16 +161,18 @@
 <flux:modal name="travel-order-info" class="w-300">
     <form action="{{ route('client.travel-order.store', $tripTicket->id) }}" method="POST">
         @csrf
+        @method('PATCH')
+
         <div class="mb-6">
             <flux:heading size="lg">Generate Travel Order</flux:heading>
             <flux:text class="mt-2">Enter the details for this order. Fields will be blank for new entries.</flux:text>
         </div>
 
-        <flux:input type="date" label="Date" name="date" class="mb-4" required />
+        <flux:input type="date" label="Date" name="date" class="mb-4" />
 
 
         <div class="mb-4" x-data="{ rows: [0, 1, 2] }">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center mb-2">
                 <flux:label>Personnel Details</flux:label>
                 <flux:button variant="ghost" size="sm" icon="plus" @click.prevent="rows.push(rows.length)">
                     Add Row
@@ -178,7 +205,34 @@
         <flux:textarea label="Purpose" name="purpose" placeholder="Specific purpose of trip..." rows="2" class="mb-4">
         </flux:textarea>
 
-        <flux:input label="Recommended By" name="recommended_by" placeholder="Supervisor Name 1, Supervisor Name 2" />
+        {{-- RECOMMENDED BY DYNAMIC SECTION --}}
+        <div class="mb-4" x-data="{ recommendRows: [0] }">
+            <div class="flex justify-between items-center mb-2">
+                <flux:label>Recommended By</flux:label>
+                <flux:button variant="ghost" size="sm" icon="plus"
+                    @click.prevent="recommendRows.push(recommendRows.length)">
+                    Add Row
+                </flux:button>
+            </div>
+
+            <div class="space-y-2">
+                <template x-for="(row, index) in recommendRows" :key="index">
+                    <div class="flex gap-2 items-end">
+                        <div class="flex-1">
+                            <flux:input ::label="index === 0 ? 'Name' : ''" ::name="`recommended_by[${index}][name]`"
+                                placeholder="Supervisor Name" />
+                        </div>
+                        <div class="w-52">
+                            <flux:input ::label="index === 0 ? 'Position' : ''"
+                                ::name="`recommended_by[${index}][position]`" placeholder="Role" />
+                        </div>
+                        <flux:button variant="ghost" size="sm" icon="trash"
+                            @click.prevent="recommendRows.splice(index, 1)" class="mb-[2px] cusor-pointer"
+                            x-show="recommendRows.length > 1" />
+                    </div>
+                </template>
+            </div>
+        </div>
 
         <div class="flex mt-2">
             <flux:spacer />

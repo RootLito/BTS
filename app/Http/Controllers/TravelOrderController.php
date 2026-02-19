@@ -10,20 +10,26 @@ class TravelOrderController extends Controller
 {
     public function store(Request $request, TripTicket $tripTicket)
     {
+        $tripId = $tripTicket->id ?? $request->route('tripTicket');
+
+        if (!$tripId) {
+            return back()->withErrors(['error' => 'Invalid Trip Ticket ID.']);
+        }
+
         $validated = $request->validate([
             'date' => 'required|date',
-
             'personnel' => 'required|array',
             'personnel.*.name' => 'nullable|string',
             'personnel.*.salary' => 'nullable|string',
             'personnel.*.position' => 'nullable|string',
             'personnel.*.office' => 'nullable|string',
-
             'departure' => 'nullable|string',
             'return' => 'nullable|string',
             'destination' => 'nullable|string',
             'purpose' => 'nullable|string',
-            'recommended_by' => 'nullable|string',
+            'recommended_by' => 'nullable|array',
+            'recommended_by.*.name' => 'nullable|string',
+            'recommended_by.*.position' => 'nullable|string',
         ]);
 
         $personnel = array_values(array_filter($validated['personnel'], function ($person) {
@@ -32,13 +38,10 @@ class TravelOrderController extends Controller
 
         $recommended = [];
         if (!empty($validated['recommended_by'])) {
-            $recommended = array_values(array_filter(array_map(
-                fn($s) => trim($s),
-                explode(',', $validated['recommended_by'])
-            ), fn($s) => $s !== ''));
+            $recommended = array_values(array_filter($validated['recommended_by'], function ($recommender) {
+                return isset($recommender['name']) && trim($recommender['name']) !== '';
+            }));
         }
-
-        $tripId = $tripTicket->id;
 
         $travelOrder = TravelOrder::updateOrCreate(
             ['trip_id' => $tripId],
@@ -53,7 +56,7 @@ class TravelOrderController extends Controller
             ]
         );
 
-        return redirect()->route('client.travel-order.show', [$tripId]);
+        return redirect()->route('client.travel-order.show', $tripId);
     }
 
     public function show(TripTicket $tripTicket)

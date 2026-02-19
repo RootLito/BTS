@@ -65,27 +65,21 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::get('/trip-ticket/{tripTicket}/ticket', [TripTicketController::class, 'showTicket'])->name('client.trip-ticket.ticket');
     Route::patch('/trip-ticket/{tripTicket}/add-info', [TripTicketController::class, 'addInfo'])
         ->name('client.trip-ticket.add-info');
-    Route::post('/client/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])
-        ->name('client.travel-order.store');
+
+
+
     Route::get('/client/travel-order/{tripTicket}', [TravelOrderController::class, 'show'])
         ->name('client.travel-order.show');
-
-
-    Route::post('/travel-order', [TravelOrderController::class, 'store'])
+    Route::patch('/client/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])
         ->name('client.travel-order.store');
-    Route::get('/trip-ticket/{tripTicket}/travel-order/view', [TravelOrderController::class, 'show'])
-        ->name('client.travel-order.show');
-    // Route to view/print the generated Travel Order
-    Route::get('/travel-order/view', [TravelOrderController::class, 'show'])
-        ->name('client.travel-order.to');
+
+    // Route::get('/travel-order', function () {
+    //     return view('client.travel-order');
+    // })->name('client.travel-order');
+    // Route::patch('/travel-order', [TravelOrderController::class, 'store'])
+    //     ->name('client.travel-order.store');
 
 
-
-
-
-    Route::get('/travel-order', function () {
-        return view('client.travel-order');
-    })->name('client.travel-order');
     Route::get('/trip-history', function () {
         return view('client.trip-history');
     })->name('client.trip-history');
