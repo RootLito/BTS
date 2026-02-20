@@ -5,6 +5,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TripTicketController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TravelOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,8 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/booking', [TripTicketController::class, 'indexAdmin'])->name('admin.booking');
     Route::get('/booking/{tripTicket}', [TripTicketController::class, 'showAdmin'])->name('admin.booking.show');
+    Route::put('/booking/{tripTicket}', [TripTicketController::class, 'update'])->name('admin.booking.update');
+
 
     // Drivers (All your original routes kept)
     Route::get('/driver', [DriverController::class, 'index'])->name('admin.driver');
@@ -44,6 +47,16 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::post('/vehicle', [VehicleController::class, 'store'])->name('vehicle.store');
     Route::put('/vehicle/{vehicle}', [VehicleController::class, 'update'])->name('vehicle.update');
     Route::delete('/vehicle/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicle.destroy');
+
+
+
+    Route::put('/admin/booking/{tripTicket}/assign-driver', [TripTicketController::class, 'assignDriver'])->name('admin.booking.assign');
+    Route::put('/admin/booking/{tripTicket}/update-status', [TripTicketController::class, 'updateStatus'])->name('admin.booking.status');
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notification');
+    Route::patch('/notifications/{notification}', [NotificationController::class, 'update'])->name('admin.notification.update');
+    Route::get('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('admin.notification.read');
 });
 
 // --- CLIENT PROTECTED ROUTES ---
@@ -57,8 +70,7 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::get('/booking', [TripTicketController::class, 'index'])->name('client.booking');
     Route::post('/booking', [TripTicketController::class, 'store'])->name('trips.store');
     Route::get('/booking/{tripTicket}', [TripTicketController::class, 'show'])->name('trips.show');
-    Route::put('/booking/{tripTicket}', [TripTicketController::class, 'update'])->name('trips.update');
-    Route::delete('/booking/{tripTicket}', [TripTicketController::class, 'destroy'])->name('trips.destroy');
+    Route::delete('/booking/{tripTicket}', [TripTicketController::class, 'destroy'])->name('client.booking.destroy');
 
     // Other Client Pages
     Route::get('/trip-ticket', [TripTicketController::class, 'tripTicket'])->name('client.trip-ticket');
@@ -78,6 +90,7 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     // })->name('client.travel-order');
     // Route::patch('/travel-order', [TravelOrderController::class, 'store'])
     //     ->name('client.travel-order.store');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'clientRead'])->name('client.notification.read');
 
 
     Route::get('/trip-history', function () {

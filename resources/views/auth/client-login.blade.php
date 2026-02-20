@@ -16,7 +16,7 @@
 <body>
     <div class="w-full h-screen grid place-items-center bg-cover bg-center bg-no-repeat"
         style="background-image: url('{{ asset('images/pic.jpg') }}');">
-        <flux:card class="space-y-6 w-100">
+        <flux:card class="space-y-6 w-100 ">
             <img src="{{ asset('images/bfar.png') }}" alt="BFAR Logo" width="150" class="mx-auto">
             <div>
                 <flux:heading size="lg" class="text-center">Booking and Ticketing System</flux:heading>

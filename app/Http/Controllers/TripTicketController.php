@@ -5,10 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\TripTicket;
 use App\Models\Driver;
 use App\Models\Vehicle;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class TripTicketController extends Controller
 {
+    public function __construct()
+    {
+        parent::__construct();
+    }
     public function index()
     {
         $tickets = TripTicket::with(['driver', 'vehicle'])
@@ -91,45 +96,109 @@ class TripTicketController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'passengers' => 'required|array|min:1',
-            'driver_id' => 'exists:drivers,id',
-            'vehicle_id' => 'exists:vehicles,id',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'vehicle_id' => 'nullable|exists:vehicles,id',
         ]);
+
         $validated['client_id'] = auth()->id();
         $validated['office'] = auth()->user()->office;
         $validated['status'] = 'Pending';
 
-        TripTicket::create($validated);
+        $tripTicket = TripTicket::create($validated);
+
+        Notification::create([
+            'trip_id' => $tripTicket->id,
+            'message' => 'New trip ticket created for ' . $validated['destination'],
+            'is_admin' => true,
+            'is_viewed' => false,
+        ]);
 
         return redirect()->route('client.booking')->with('status', 'Booking submitted successfully!');
     }
 
 
 
-    public function update(Request $request, TripTicket $tripTicket)
+    public function assignDriver(Request $request, TripTicket $tripTicket)
     {
-        $validated = $request->validate([
-            'status' => 'nullable|string|in:Pending,Approved,Cancelled,Completed',
-            'driver_id' => 'nullable|exists:drivers,id',
-        ]);
-        if ($request->filled('driver_id')) {
-            $driver = Driver::find($request->driver_id);
-            if ($driver) {
-                $validated['vehicle_id'] = $driver->vehicle_id;
-            }
+        $request->validate(['driver_id' => 'nullable|exists:drivers,id']);
+
+        // 1. Reset Old Driver/Vehicle Status to Available
+        if ($tripTicket->driver_id) {
+            Driver::where('id', $tripTicket->driver_id)->update(['status' => 'Available']);
+        }
+        if ($tripTicket->vehicle_id) {
+            Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'Available']);
         }
 
-        $tripTicket->update($validated);
-        $message = $request->has('status')
-            ? "Trip status marked as {$request->status}!"
-            : "Assignment updated!";
+        // 2. Assign New Driver
+        if ($request->driver_id) {
+            $driver = Driver::with('vehicle')->findOrFail($request->driver_id);
 
-        return redirect()->back()->with('success', $message);
+            $tripTicket->update([
+                'driver_id' => $driver->id,
+                'vehicle_id' => $driver->vehicle_id,
+            ]);
+
+            // If trip is already Approved, mark new driver as "On Trip"
+            if ($tripTicket->status === 'Approved') {
+                $driver->update(['status' => 'On Trip']);
+                if ($driver->vehicle)
+                    $driver->vehicle->update(['status' => 'On Trip']);
+            }
+
+            // Send Notification for Driver Assignment
+            Notification::create([
+                'trip_id' => $tripTicket->id,
+                'message' => "Driver {$driver->name} has been assigned to your trip to {$tripTicket->destination}.",
+                'is_admin' => false,
+            ]);
+        } else {
+            // Unassign everything
+            $tripTicket->update(['driver_id' => null, 'vehicle_id' => null]);
+        }
+
+        return redirect()->back()->with('success', 'Driver assignment updated!');
     }
+
+    // FUNCTION 2: Only handles Approval/Cancellation
+    public function updateStatus(Request $request, TripTicket $tripTicket)
+    {
+        $request->validate(['status' => 'required|in:Approved,Cancelled,Completed']);
+        $newStatus = $request->status;
+
+        // 1. Update Driver/Vehicle Status based on the move
+        if ($newStatus === 'Approved') {
+            if ($tripTicket->driver_id)
+                Driver::where('id', $tripTicket->driver_id)->update(['status' => 'On Trip']);
+            if ($tripTicket->vehicle_id)
+                Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'On Trip']);
+
+            // STORE NOTIFICATION ONLY ON APPROVE
+            Notification::create([
+                'trip_id' => $tripTicket->id,
+                'message' => "Your trip ticket to {$tripTicket->destination} has been Approved!",
+                'is_admin' => false,
+            ]);
+        } else if (in_array($newStatus, ['Cancelled', 'Completed'])) {
+            if ($tripTicket->driver_id)
+                Driver::where('id', $tripTicket->driver_id)->update(['status' => 'Available']);
+            if ($tripTicket->vehicle_id)
+                Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'Available']);
+
+            // NO notification stored here as per your request
+        }
+
+        $tripTicket->update(['status' => $newStatus]);
+
+        return redirect()->back()->with('success', "Trip marked as {$newStatus}!");
+    }
+
+
 
     public function destroy(TripTicket $tripTicket)
     {
         $tripTicket->delete();
-        return redirect()->back()->with('success', 'Trip Ticket deleted!');
+        return back()->with('status', 'Trip deleted successfully!');
     }
 
 
@@ -157,5 +226,5 @@ class TripTicketController extends Controller
     }
 
 
-    
+
 }

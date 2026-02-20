@@ -17,10 +17,22 @@ return new class extends Migration
             $table->string('destination');
             $table->date('start_date');
             $table->date('end_date');
-            $table->json('passengers'); 
-            $table->foreignId('driver_id')->constrained('drivers');
-            $table->foreignId('vehicle_id')->constrained('vehicles');
+            $table->json('passengers');
+            $table->foreignId('driver_id')
+                ->nullable()
+                ->constrained('drivers');
+            $table->foreignId('vehicle_id')
+                ->nullable()
+                ->constrained('vehicles');
             $table->string('status')->default('Pending');
+            $table->foreignId('client_id')
+                ->nullable()
+                ->constrained('clients')
+                ->onDelete('cascade');
+            $table->string('office')->nullable();
+            $table->string('supervisor')->nullable();
+            $table->string('passengers2')->nullable();
+            $table->string('purpose2')->nullable();
             $table->timestamps();
         });
     }

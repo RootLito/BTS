@@ -33,22 +33,71 @@
                 :current="request()->routeIs('client.trip-ticket*')">
                 Trips
             </flux:navbar.item>
-            {{-- <flux:navbar.item icon="document-text" href="">
-                Documents
-            </flux:navbar.item> --}}
 
-            {{-- <flux:navbar.item icon="document-text" href="{{ route('client.travel-order') }}"
-                :current="request()->routeIs('client.travel-order')">
-                Travel Order
-            </flux:navbar.item>
-
-            <flux:navbar.item icon="clock" href="{{ route('client.trip-history') }}"
-                :current="request()->routeIs('client.trip-history')">
-                Trip History
-            </flux:navbar.item> --}}
         </flux:navbar>
         <flux:spacer />
-        <flux:icon.bell class="me-4"/>    
+        <flux:dropdown class="me-2">
+            <div class="relative inline-block">
+                <flux:button variant="subtle" icon="bell" />
+                @if ($unreadClientCount > 0)
+                    <span class="absolute top-2 right-2 -mt-1 -mr-1 flex h-3 w-3">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span
+                            class="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white dark:border-zinc-900"></span>
+                    </span>
+                @endif
+            </div>
+
+            <flux:menu class="w-80">
+                <flux:menu.item
+                    class="font-bold border-b border-zinc-100 dark:border-zinc-700 text-zinc-800 dark:text-white">
+                    Notifications ({{ $unreadClientCount }})
+                </flux:menu.item>
+
+                <div class="max-h-[240px] overflow-y-auto">
+                    @forelse($clientNotifications as $notif)
+                        <flux:modal.trigger :name="'notif-modal-' . $notif->id">
+                            <flux:menu.item
+                                class="flex flex-col items-start gap-0 py-3 bg-blue-50/50 dark:bg-blue-900/10">
+                                <div class="flex justify-between w-full items-center">
+                                    <span class="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
+                                        {{ $notif->created_at->diffForHumans() }}
+                                    </span>
+                                    {{-- Blue dot indicating it's unread --}}
+                                    <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                                </div>
+                                <span class="text-sm text-zinc-700 dark:text-zinc-300 truncate w-full mt-1">
+                                    {{ $notif->message }}
+                                </span>
+                            </flux:menu.item>
+                        </flux:modal.trigger>
+                    @empty
+                        <div class="p-6 text-center">
+                            <flux:text size="sm" class="text-zinc-500 italic">No new notifications.</flux:text>
+                        </div>
+                    @endforelse
+                </div>
+            </flux:menu>
+        </flux:dropdown>
+
+        {{-- Create a hidden modal for every notification --}}
+        @foreach ($clientNotifications as $notif)
+            <flux:modal :name="'notif-modal-' . $notif->id" class="md:w-96">
+                <div class="space-y-4">
+                    <flux:heading size="lg">Trip Notification</flux:heading>
+                    <flux:text>{{ $notif->message }}</flux:text>
+
+                    <div class="flex justify-end">
+                        {{-- Form to mark as read when closing or clicking 'OK' --}}
+                        <form action="{{ route('client.notification.read', $notif->id) }}" method="POST">
+                            @csrf
+                            <flux:button type="submit" variant="filled">Close</flux:button>
+                        </form>
+                    </div>
+                </div>
+            </flux:modal>
+        @endforeach
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <flux:button type="submit" variant="filled" icon="arrow-left-start-on-rectangle" color="red">

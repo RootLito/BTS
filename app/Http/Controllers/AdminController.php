@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\TripTicket;
 use App\Models\Driver;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -26,13 +27,21 @@ class AdminController extends Controller
         $activeTripsCount = TripTicket::whereMonth('created_at', now()->month)->count();
 
         $events = TripTicket::all()->map(function ($ticket) {
+            $startDate = Carbon::parse($ticket->start_date);
+            $endDate = Carbon::parse($ticket->end_date);
+
             return [
                 'title' => $ticket->destination,
-                'start' => $ticket->created_at->format('Y-m-d'),
-                'color' => $ticket->status === 'On Trip' ? '#facc15' : '#10b981',
+                'start' => $startDate->format('Y-m-d'),
+                'end'   => $endDate->copy()->addDay()->format('Y-m-d'),
+                'color' => $ticket->status === 'Approved' ? '#10b981' : '#facc15',
                 'extendedProps' => [
                     'office' => $ticket->office,
+                    'purpose' => $ticket->purpose,
                     'driver' => $ticket->driver->name ?? 'No Driver',
+                    'status' => $ticket->status,
+                    'display_start' => $startDate->format('M d, Y'),
+                    'display_end' => $endDate->format('M d, Y'),
                 ]
             ];
         });
@@ -48,8 +57,7 @@ class AdminController extends Controller
             'driversList',
             'vehiclesList',
             'activeTripsCount',
-            'events',
-            'activeTripsCount'
+            'events'
         ));
     }
 }

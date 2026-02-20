@@ -42,11 +42,10 @@
             <flux:table.rows>
                 @forelse($tickets as $ticket)
                 <flux:table.row>
-                    <flux:table.cell></flux:table.cell>
+                    <flux:table.cell class="font-bold text-zinc-800">{{ $ticket->office}}</flux:table.cell>
                     <flux:table.cell>
                         <div class="flex flex-col">
-                            <span class="font-medium text-zinc-800 dark:text-white">{{ $ticket->destination
-                                }}</span>
+                            <span class="font-medium text-zinc-800 dark:text-white">{{ $ticket->destination}}</span>
                             <span class="text-xs text-zinc-500 truncate max-w-[200px]">{{ $ticket->purpose }}</span>
                         </div>
                     </flux:table.cell>

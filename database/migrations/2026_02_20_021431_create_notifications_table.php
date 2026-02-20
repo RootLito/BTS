@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists('users');
-
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->string('username')->unique();
-            $table->string('password');
-            $table->string('office')->nullable();
-            $table->string('role')->default('client');
-            $table->rememberToken();
+            $table->foreignId('trip_id')->constrained('trip_tickets')->onDelete('cascade');
+            $table->text('message');
+            $table->boolean('is_viewed')->default(false);
+            $table->boolean('is_admin');
             $table->timestamps();
         });
     }
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('notifications');
     }
 };

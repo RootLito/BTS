@@ -18,16 +18,43 @@
         class="bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
         <flux:avatar size="xl" src="/images/bfar.png" class="bg-white mx-auto" />
 
-        <h2 class="text-center font-bold text-3xl">B.T.S.</h2>
-
+        <h2 class="text-center font-bold text-3xl">T.S.</h2>
 
 
         <flux:sidebar.nav>
-            <flux:sidebar.item icon="home" href="{{ route('admin.dashboard') }}" class="py-2">Dashboard
+            <flux:sidebar.item icon="home" :href="route('admin.dashboard')"
+                :current="request()->routeIs('admin.dashboard')" class="py-2">
+                Dashboard
             </flux:sidebar.item>
-            <flux:sidebar.item icon="ticket" href="{{ route('admin.booking') }}">Booked Trips</flux:sidebar.item>
-            <flux:sidebar.item icon="user" href="{{ route('admin.driver') }}">Driver</flux:sidebar.item>
-            <flux:sidebar.item icon="truck" href="{{ route('admin.vehicle') }}">Vehicle</flux:sidebar.item>
+
+            <flux:sidebar.item icon="ticket" :href="route('admin.booking')"
+                :current="request()->routeIs('admin.booking*')">
+                Booked Trips
+            </flux:sidebar.item>
+
+            <flux:sidebar.item icon="user" :href="route('admin.driver')"
+                :current="request()->routeIs('admin.driver')">
+                Driver
+            </flux:sidebar.item>
+
+            <flux:sidebar.item icon="truck" :href="route('admin.vehicle')"
+                :current="request()->routeIs('admin.vehicle')">
+                Vehicle
+            </flux:sidebar.item>
+
+            <flux:sidebar.item icon="bell" :href="route('admin.notification')"
+                :current="request()->routeIs('admin.notification')">
+                <div class="flex items-center w-full">
+                    <span>Notification</span>
+
+                    @if ($unreadCount > 0)
+                        <span
+                            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white shadow-sm flex-shrink-0">
+                            {{ $unreadCount }}
+                        </span>
+                    @endif
+                </div>
+            </flux:sidebar.item>
         </flux:sidebar.nav>
 
 
@@ -35,7 +62,8 @@
 
         <form action="{{ route('logout') }}" method="POST">
             @csrf
-            <flux:button type="submit" variant="filled" color="red" icon="arrow-left-start-on-rectangle" class="w-full">
+            <flux:button type="submit" variant="filled" color="red" icon="arrow-left-start-on-rectangle"
+                class="w-full">
                 Logout
             </flux:button>
         </form>
