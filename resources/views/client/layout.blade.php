@@ -89,7 +89,6 @@
                     <flux:text>{{ $notif->message }}</flux:text>
 
                     <div class="flex justify-end">
-                        {{-- Form to mark as read when closing or clicking 'OK' --}}
                         <form action="{{ route('client.notification.read', $notif->id) }}" method="POST">
                             @csrf
                             <flux:button type="submit" variant="filled">Close</flux:button>
