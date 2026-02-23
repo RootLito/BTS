@@ -117,6 +117,52 @@ class TripTicketController extends Controller
     }
 
 
+    public function storeBooking(Request $request)
+    {
+        $request->merge([
+            'passengers' => json_decode($request->passengers, true)
+        ]);
+
+        $validated = $request->validate([
+            'office' => 'required|string|max:255',
+            'purpose' => 'required|string',
+            'destination' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'passengers' => 'required|array|min:1',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'vehicle_id' => 'nullable|exists:vehicles,id',
+        ]);
+
+        $validated['client_id'] = null;
+        $validated['status'] = 'Pending';
+
+        $tripTicket = TripTicket::create($validated);
+
+        Notification::create([
+            'trip_id' => $tripTicket->id,
+            'message' => 'New trip ticket created for ' . $validated['destination'],
+            'is_admin' => true,
+            'is_viewed' => false,
+        ]);
+
+        return redirect()->route('admin.book')->with('status', 'Booking recorded successfully!');
+    }
+
+    public function destroyBooking($id)
+    {
+        $ticket = TripTicket::findOrFail($id);
+
+        if (!$ticket->client_id || $ticket->client_id === auth()->id()) {
+            $ticket->delete();
+
+            return redirect()->back()->with('status', 'Booking deleted successfully.');
+        }
+
+        return redirect()->back()->with('error', 'You do not have permission to delete this record.');
+    }
+
+
 
     public function assignDriver(Request $request, TripTicket $tripTicket)
     {

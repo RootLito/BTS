@@ -35,6 +35,15 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('/booking/{tripTicket}', [TripTicketController::class, 'showAdmin'])->name('admin.booking.show');
     Route::put('/booking/{tripTicket}', [TripTicketController::class, 'update'])->name('admin.booking.update');
 
+    Route::get('/book', function () {
+        return view('admin.book');
+    })->name('admin.book');
+    Route::post('/book', [TripTicketController::class, 'storeBooking'])
+        ->name('book.store');
+    Route::delete('/admin/bookings/{ticket}', [TripTicketController::class, 'destroyBooking'])
+        ->name('admin.booking.destroy');
+
+
 
     // Drivers (All your original routes kept)
     Route::get('/driver', [DriverController::class, 'index'])->name('admin.driver');
@@ -57,6 +66,8 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notification');
     Route::patch('/notifications/{notification}', [NotificationController::class, 'update'])->name('admin.notification.update');
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('admin.notification.read');
+    Route::post('/admin/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.markAllRead');
+    Route::delete('/admin/notifications/clear-all', [NotificationController::class, 'clearAll'])->name('admin.notifications.clearAll');
 });
 
 // --- CLIENT PROTECTED ROUTES ---

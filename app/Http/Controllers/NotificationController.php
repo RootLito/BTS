@@ -28,4 +28,20 @@ class NotificationController extends Controller
         $notification->update(['is_viewed' => true]);
         return redirect()->back();
     }
+
+    public function markAllAsRead()
+    {
+        Notification::where('is_admin', true)
+            ->where('is_viewed', false)
+            ->update(['is_viewed' => true]);
+
+        return redirect()->back()->with('status', 'All notifications marked as read.');
+    }
+
+    public function clearAll()
+    {
+        Notification::where('is_admin', true)->delete();
+
+        return redirect()->back()->with('status', 'Notifications cleared.');
+    }
 }

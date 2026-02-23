@@ -27,9 +27,14 @@
                 Dashboard
             </flux:sidebar.item>
 
+            <flux:sidebar.item icon="calendar" :href="route('admin.book')"
+                :current="request()->routeIs('admin.book')">
+                Booking
+            </flux:sidebar.item>
+
             <flux:sidebar.item icon="ticket" :href="route('admin.booking')"
                 :current="request()->routeIs('admin.booking*')">
-                Booked Trips
+                Trips
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="user" :href="route('admin.driver')"
