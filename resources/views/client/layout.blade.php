@@ -18,7 +18,7 @@
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
         <flux:brand href="#" logo="/images/bfar.png" name="BFAR" class="max-lg:hidden" />
 
-        <flux:navbar class="-mb-px max-lg:hidden">
+        <flux:navbar class="">
             <flux:navbar.item icon="home" href="{{ route('client.home') }}"
                 :current="request()->routeIs('client.home')">
                 Home
@@ -29,9 +29,17 @@
                 Booking
             </flux:navbar.item>
 
-            <flux:navbar.item icon="ticket" href="{{ route('client.trip-ticket') }}"
+            <flux:navbar.item icon="map" href="{{ route('client.trip-ticket') }}"
                 :current="request()->routeIs('client.trip-ticket*')">
                 Trips
+            </flux:navbar.item>
+
+            <flux:navbar.item icon="ticket" href="{{ route('client.trip-ticket') }}">
+                Trip Ticket
+            </flux:navbar.item>
+
+            <flux:navbar.item icon="document-text" href="{{ route('client.trip-ticket') }}">
+                Travel Order
             </flux:navbar.item>
 
         </flux:navbar>

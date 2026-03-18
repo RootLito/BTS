@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
@@ -73,9 +74,9 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
 // --- CLIENT PROTECTED ROUTES ---
 // Changed 'role:client' to 'auth:client' guard
 Route::middleware(['auth:client'])->prefix('client')->group(function () {
-    Route::get('/home', function () {
-        return view('client.home');
-    })->name('client.home');
+    Route::middleware(['auth:client'])->group(function () {
+        Route::get('/home', [ClientController::class, 'index'])->name('client.home');
+    });
 
     // Bookings (All your original routes kept)
     Route::get('/booking', [TripTicketController::class, 'index'])->name('client.booking');

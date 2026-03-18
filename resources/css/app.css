@@ -1,21 +1,16 @@
-@import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
+@import "tailwindcss";
+@import "../../vendor/livewire/flux/dist/flux.css";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
-
-
-
 @custom-variant dark (&:where(.dark, .dark *));
-
 
 @theme {
     --font-sans: Inter, sans-serif;
 }
-
 
 
 .printable-folio {
@@ -26,7 +21,7 @@
     min-height: 13in;
 }
 
-.top{
+.top {
     position: absolute;
     top: 0;
     left: 0;
@@ -34,7 +29,7 @@
     height: auto;
 }
 
-.bot{
+.bot {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -43,8 +38,8 @@
 }
 
 .ticket-container {
-    padding: 1.5in 1in 1in 1in; 
-    font-family: 'Times New Roman', Times, serif;
+    padding: 1.5in 1in 1in 1in;
+    font-family: "Times New Roman", Times, serif;
     color: black;
 }
 
@@ -66,7 +61,8 @@
     border-collapse: collapse;
 }
 
-.ticket-table th, .ticket-table td {
+.ticket-table th,
+.ticket-table td {
     border: 1px solid black;
     padding: 4px;
     height: 25px;
@@ -77,7 +73,7 @@
 .ticket-table {
     width: 100%;
     border-collapse: collapse;
-    border: 1.5px solid black; 
+    border: 1.5px solid black;
     line-height: 1;
 }
 
@@ -89,13 +85,13 @@
 
 .ticket-table td {
     padding: 0;
-    height: 22px; 
+    height: 22px;
     font-size: 9pt;
-    border-bottom: 1px dashed black; 
-    border-right: 1px dotted black; 
+    border-bottom: 1px dashed black;
+    border-right: 1px dotted black;
 }
 
-.ticket-table td:last-child, 
+.ticket-table td:last-child,
 .ticket-table th:last-child {
     border-right: none;
 }
@@ -104,34 +100,76 @@
     border-bottom: none;
 }
 
-@media print {
-    @page {
-        size: 8.5in 13in;
-        margin: 0;
+/* @media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .flux-sidebar,
+    .flux-header,
+    .flux-nav,
+    [flux-component-name] {
+        display: none !important;
     }
 
     .printable-folio {
-        position: relative !important;
+        position: absolute;
+        left: 0;
+        top: 0;
         width: 8.5in;
         min-height: 13in;
-        height: auto !important; 
-        margin: 0 auto;
-        padding-bottom: 50px; 
-        display: block;
+        visibility: visible;
+    }
+} */
+
+
+
+@media print {
+    /* 1. Hide the entire UI shell */
+    flux\:header, 
+    flux\:sidebar, 
+    .print\:hidden,
+    .mx-auto.my-4.flex.justify-between { 
+        display: none !important; 
     }
 
-    .bot {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
+    @page {
+        margin: 0;
     }
 
-    .details-footer {
-        page-break-inside: avoid;
-        break-inside: avoid;
-        display: block;
-        position: relative;
+
+    /* 2. Strip the body of Tailwind's fixed height and background */
+    html, body {
+        visibility: hidden !important;
+        background: white !important;
+        height: auto !important;
+        overflow: visible !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+    }
+
+    /* 3. Force the printable area to show and reset its position */
+    .printable-folio, .printable-folio * {
+        visibility: visible !important;
+    }
+
+    .printable-folio {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 816px !important;
+        height: 1248px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 4. Remove Flux's main container padding/constraints */
+    flux\:main {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
     }
 }
 

@@ -136,9 +136,6 @@
                                 right: 'prev,next today'
                             },
                 
-                            // REMOVED dateClick so clicking the empty day does nothing.
-                
-                            // ADDED eventClick to target the specific indicator
                             eventClick: (info) => {
                                 this.activeEvent = {
                                     title: info.event.title,

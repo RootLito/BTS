@@ -20,9 +20,9 @@
                         @php
                             $statusData = match ($tripTicket->status) {
                                 'Pending' => ['color' => 'yellow', 'icon' => 'clock'],
-                                'Approved' => ['color' => 'emerald', 'icon' => 'check-circle'],
+                                'Approved' => ['color' => 'blue', 'icon' => 'check-circle'],
                                 'Cancelled' => ['color' => 'red', 'icon' => 'x-circle'],
-                                'Completed' => ['color' => 'blue', 'icon' => 'flag'],
+                                'Completed' => ['color' => 'emerald', 'icon' => 'flag'],
                                 default => ['color' => 'zinc', 'icon' => 'question-mark-circle'],
                             };
                         @endphp
@@ -177,7 +177,7 @@
             </div>
 
             <div class="space-y-6">
-                <flux:card>
+                {{-- <flux:card>
                     <div class="flex items-center justify-between mb-4">
                         <flux:heading size="sm">Documents</flux:heading>
                         <flux:badge size="sm" variant="subtle" color="zinc">Pending Release</flux:badge>
@@ -205,7 +205,7 @@
                             Release Documents
                         </flux:button>
                     </div>
-                </flux:card>
+                </flux:card> --}}
 
                 <flux:card>
                     <flux:heading size="sm" class="mb-4">Actions</flux:heading>
