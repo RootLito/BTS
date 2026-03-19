@@ -23,13 +23,14 @@ Route::middleware('guest')->group(function () {
     Route::get('/client-login', function () {
         return view('auth.client-login');
     })->name('client.login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('client.password.request');
+    Route::post('/forgot-password', [AuthController::class, 'resetPassword'])->name('client.password.reset.verify');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // --- ADMIN PROTECTED ROUTES ---
-// Changed 'role:admin' to 'auth:admin' guard
 Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/booking', [TripTicketController::class, 'indexAdmin'])->name('admin.booking');
@@ -46,13 +47,11 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
 
 
 
-    // Drivers (All your original routes kept)
     Route::get('/driver', [DriverController::class, 'index'])->name('admin.driver');
     Route::post('/driver', [DriverController::class, 'store'])->name('driver.store');
     Route::put('/driver/{driver}', [DriverController::class, 'update'])->name('driver.update');
     Route::delete('/driver/{driver}', [DriverController::class, 'destroy'])->name('driver.destroy');
 
-    // Vehicles (All your original routes kept)
     Route::get('/vehicle', [VehicleController::class, 'index'])->name('admin.vehicle');
     Route::post('/vehicle', [VehicleController::class, 'store'])->name('vehicle.store');
     Route::put('/vehicle/{vehicle}', [VehicleController::class, 'update'])->name('vehicle.update');
@@ -63,7 +62,6 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::put('/admin/booking/{tripTicket}/assign-driver', [TripTicketController::class, 'assignDriver'])->name('admin.booking.assign');
     Route::put('/admin/booking/{tripTicket}/update-status', [TripTicketController::class, 'updateStatus'])->name('admin.booking.status');
 
-    // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notification');
     Route::patch('/notifications/{notification}', [NotificationController::class, 'update'])->name('admin.notification.update');
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('admin.notification.read');
@@ -72,19 +70,33 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
 });
 
 // --- CLIENT PROTECTED ROUTES ---
-// Changed 'role:client' to 'auth:client' guard
 Route::middleware(['auth:client'])->prefix('client')->group(function () {
-    Route::middleware(['auth:client'])->group(function () {
-        Route::get('/home', [ClientController::class, 'index'])->name('client.home');
-    });
 
-    // Bookings (All your original routes kept)
+    Route::get('/tt-print', function () {
+        return view('client.tt-print');
+    })->name('client.tt-print');
+    Route::get('/to-print', function () {
+        return view('client.to-print');
+    })->name('client.to-print');
+
+
+    Route::get('/profile', function () {
+        return view('client.profile');
+    })->name('client.profile');
+    Route::get('/profile', [ClientController::class, 'profile'])->name('client.profile');
+    Route::patch('/profile', [ClientController::class, 'updateProfile'])->name('client.profile.update');
+
+
+
+
+
+
+    Route::get('/home', [ClientController::class, 'index'])->name('client.home');
     Route::get('/booking', [TripTicketController::class, 'index'])->name('client.booking');
     Route::post('/booking', [TripTicketController::class, 'store'])->name('trips.store');
     Route::get('/booking/{tripTicket}', [TripTicketController::class, 'show'])->name('trips.show');
     Route::delete('/booking/{tripTicket}', [TripTicketController::class, 'destroy'])->name('client.booking.destroy');
 
-    // Other Client Pages
     Route::get('/trip-ticket', [TripTicketController::class, 'tripTicket'])->name('client.trip-ticket');
     Route::get('/trip-ticket/{tripTicket}/ticket', [TripTicketController::class, 'showTicket'])->name('client.trip-ticket.ticket');
     Route::patch('/trip-ticket/{tripTicket}/add-info', [TripTicketController::class, 'addInfo'])
@@ -97,11 +109,6 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::patch('/client/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])
         ->name('client.travel-order.store');
 
-    // Route::get('/travel-order', function () {
-    //     return view('client.travel-order');
-    // })->name('client.travel-order');
-    // Route::patch('/travel-order', [TravelOrderController::class, 'store'])
-    //     ->name('client.travel-order.store');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'clientRead'])->name('client.notification.read');
 
 

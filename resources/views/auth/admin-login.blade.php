@@ -27,7 +27,7 @@
                 <flux:callout variant="danger" icon="x-circle" heading="{{ $errors->first() }}" />
             @endif --}}
 
-            <form action="{{ route('login.post') }}" method="POST">
+            <form action="{{ route('login.submit') }}" method="POST">
                 @csrf
                 <input type="hidden" name="type" value="admin">
 

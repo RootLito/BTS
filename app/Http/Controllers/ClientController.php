@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TripTicket;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -10,6 +12,33 @@ use Carbon\Carbon;
 
 class ClientController extends Controller
 {
+    public function profile()
+    {
+        $client = Auth::user();
+        return view('client.profile', compact('client'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $client = Auth::user();
+
+        $validated = $request->validate([
+            'username' => 'required|string|max:255|unique:clients,username,' . $client->id,
+            'office' => 'required|string|max:255',
+            'password' => ['nullable', 'confirmed', Password::defaults()],
+        ]);
+
+        $client->username = $validated['username'];
+        $client->office = $validated['office'];
+
+        if ($request->filled('password')) {
+            $client->password = Hash::make($validated['password']);
+        }
+
+        $client->save();
+
+        return back()->with('status', 'profile-updated');
+    }
     public function index()
     {
         $clientId = Auth::id();
@@ -23,9 +52,7 @@ class ClientController extends Controller
             ->whereYear('start_date', $currentYear - 1)
             ->count();
 
-        // $percentageChange = $lastYearTrips > 0 
-        //     ? (($totalTrips - $lastYearTrips) / $lastYearTrips) * 100 
-        //     : 0;
+
         if ($lastYearTrips == 0) {
             $percentageChange = $totalTrips > 0 ? 100 : 0;
         } else {

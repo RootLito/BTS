@@ -4,9 +4,37 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Client;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function showForgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'username' => 'required',
+            'office' => 'required',
+            'password' => 'required|confirmed|min:6',
+        ]);
+
+        $client = Client::where('username', $request->username)
+            ->where('office', $request->office)
+            ->first();
+
+        if (!$client) {
+            return back()->withErrors(['username' => 'The details provided do not match our records.']);
+        }
+
+        $client->password = Hash::make($request->password);
+        $client->save();
+
+        return redirect()->route('client.login')->with('status', 'Password has been reset successfully!');
+    }
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -20,8 +48,8 @@ class AuthController extends Controller
                 $request->session()->regenerate();
                 return redirect()->intended(route('admin.dashboard'));
             }
-        } 
-        
+        }
+
         // Otherwise, attempt Client login
         if (Auth::guard('client')->attempt($credentials)) {
             $request->session()->regenerate();

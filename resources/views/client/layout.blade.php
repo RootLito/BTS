@@ -24,6 +24,11 @@
                 Home
             </flux:navbar.item>
 
+            <flux:navbar.item icon="user" href="{{ route('client.profile') }}"
+                :current="request()->routeIs('client.profile')">
+                Profile
+            </flux:navbar.item>
+
             <flux:navbar.item icon="calendar" href="{{ route('client.booking') }}"
                 :current="request()->routeIs('client.booking')">
                 Booking
@@ -34,11 +39,13 @@
                 Trips
             </flux:navbar.item>
 
-            <flux:navbar.item icon="ticket" href="{{ route('client.trip-ticket') }}">
+            <flux:navbar.item icon="ticket" href="{{ route('client.tt-print') }}"
+                :current="request()->routeIs('client.tt-print')">
                 Trip Ticket
             </flux:navbar.item>
 
-            <flux:navbar.item icon="document-text" href="{{ route('client.trip-ticket') }}">
+            <flux:navbar.item icon="document-text" href="{{ route('client.to-print') }}"
+                :current="request()->routeIs('client.to-print')">
                 Travel Order
             </flux:navbar.item>
 

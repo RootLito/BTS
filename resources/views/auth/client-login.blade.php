@@ -25,17 +25,17 @@
 
             <flux:separator text="Client Login" />
 
-            {{-- @if ($errors->any())
-            <flux:callout variant="danger" icon="x-circle" heading="{{ $errors->first() }}" />
-            @endif --}}
-
-            <form action="{{ route('login.post') }}" method="POST">
+            <form action="{{ route('login.submit') }}" method="POST">
                 @csrf
                 <input type="hidden" name="type" value="client">
 
                 <div class="space-y-2">
                     <flux:input name="username" label="Username" type="text" placeholder="Your username" required />
                     <flux:input name="password" type="password" label="Password" placeholder="Your password" required />
+
+                    <div class="flex justify-end text-sm">
+                        <flux:link href="{{ route('client.password.request') }}" variant="subtle">Forgot password?</flux:link>
+                    </div>
                 </div>
 
                 <div class="space-y-2 mt-4">
