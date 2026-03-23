@@ -312,7 +312,7 @@
 
         <flux:input label="Purpose" name="purpose2" placeholder="Enter trip purpose..." />
 
-        <flux:input label="Passenger(s)" name="passengers2" placeholder="Ex: Kenneth, Angelito, Maria" />
+        <flux:input label="Passenger(s)" name="passengers2" placeholder="Ex: Kenneth, Angelito" />
 
         <flux:input label="Immediate Supervisor" name="supervisor" placeholder="Enter supervisor name..." />
 
