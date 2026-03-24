@@ -26,6 +26,10 @@
                 displayEnd: '',
                 totalDays: 0
             },
+            activeEvent: null,
+            events: {{ $events->toJson() }},
+            availableDriversCount: {{ $drivers->where('status', 'Available')->count() }},
+        
             initCalendar() {
                 let calendar = new FullCalendar(this.$refs.calendar, {
                     plugins: [dayGridPlugin, interactionPlugin],
@@ -35,26 +39,55 @@
                     unselectAuto: false,
                     showNonCurrentDates: false,
                     fixedWeekCount: false,
+                    events: this.events,
+                    dayMaxEvents: 2,
+        
                     headerToolbar: {
                         left: 'title',
                         center: '',
-                        right: 'prev,next'
+                        right: 'prev,next today'
                     },
+        
+                    // --- SELECTION LOGIC (For Booking) ---
                     select: (info) => {
+                        // Check if any drivers are available before allowing selection
+                        if (this.availableDriversCount <= 0) {
+                            calendar.unselect();
+                            $flux.modal('no_drivers_modal').show();
+                            return;
+                        }
+        
                         this.selection.start = info.start;
                         this.selection.end = info.end;
                         this.selection.displayStart = info.startStr;
+        
                         let endAdjusted = new Date(info.end);
                         endAdjusted.setDate(endAdjusted.getDate() - 1);
                         let year = endAdjusted.getFullYear();
                         let month = String(endAdjusted.getMonth() + 1).padStart(2, '0');
                         let day = String(endAdjusted.getDate()).padStart(2, '0');
                         this.selection.displayEnd = `${year}-${month}-${day}`;
+        
                         const diffTime = Math.abs(info.end - info.start);
                         this.selection.totalDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                     },
+        
                     selectAllow: (selectInfo) => {
                         return selectInfo.start >= new Date().setHours(0, 0, 0, 0);
+                    },
+        
+                    // --- CLICK LOGIC (For Viewing Existing Trips) ---
+                    eventClick: (info) => {
+                        this.activeEvent = {
+                            title: info.event.title,
+                            start: info.event.extendedProps.display_start,
+                            end: info.event.extendedProps.display_end,
+                            purpose: info.event.extendedProps.purpose,
+                            driver: info.event.extendedProps.driver,
+                            office: info.event.extendedProps.office,
+                            status: info.event.extendedProps.status
+                        };
+                        $flux.modal('trip_details_modal').show();
                     }
                 });
                 calendar.render();
@@ -70,6 +103,68 @@
                     <div class="flex-1 min-h-0">
                         <div x-ref="calendar" class="h-full"></div>
                     </div>
+                    <flux:modal name="trip_details_modal" class="min-w-[25rem]">
+                        <template x-if="activeEvent">
+                            <div class="space-y-6">
+                                <div>
+                                    <flux:heading size="lg" x-text="activeEvent.title"></flux:heading>
+                                    <flux:text size="xs" variant="subtle" class="flex items-center gap-1">
+                                        <flux:icon.calendar variant="mini" class="ml-1 size-4" />
+                                        <span x-text="activeEvent.start"></span>
+
+                                        <template x-if="activeEvent.start !== activeEvent.end">
+                                            <span class="flex items-center gap-1">
+                                                <span>-</span>
+                                                <flux:icon.calendar variant="mini" class="ml-1 size-4" />
+                                                <span x-text="activeEvent.end"></span>
+                                            </span>
+                                        </template>
+
+
+                                    </flux:text>
+                                </div>
+
+                                <div class="space-y-3">
+                                    {{-- Purpose - Full Width --}}
+                                    <div
+                                        class="p-4 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                                        <flux:text size="xs" variant="subtle"
+                                            class="font-semibold uppercase tracking-wider text-zinc-500">
+                                            Purpose
+                                        </flux:text>
+                                        <flux:text class="mt-1 block" x-text="activeEvent.purpose || 'Official Business'">
+                                        </flux:text>
+                                    </div>
+
+                                    {{-- Driver & Office - Grid --}}
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div
+                                            class="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                                            <flux:text size="xs" variant="subtle" class="uppercase">Driver
+                                            </flux:text>
+                                            <flux:text size="sm" weight="medium" class="block mt-0.5"
+                                                x-text="activeEvent.driver || 'Unassigned'"></flux:text>
+                                        </div>
+
+                                        <div
+                                            class="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                                            <flux:text size="xs" variant="subtle" class="uppercase">Office
+                                            </flux:text>
+                                            <flux:text size="sm" weight="medium" class="block mt-0.5"
+                                                x-text="activeEvent.office || 'N/A'"></flux:text>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <flux:spacer />
+                                    <flux:button x-on:click="$flux.modal('trip_details_modal').close()" variant="ghost">
+                                        Close
+                                    </flux:button>
+                                </div>
+                            </div>
+                        </template>
+                    </flux:modal>
                 </flux:card>
 
                 <div class="col-span-1">
@@ -160,8 +255,8 @@
                                             <div
                                                 class="flex justify-between items-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-700">
                                                 <span x-text="name"></span>
-                                                <flux:button variant="subtle" size="xs" color="red" icon="trash"
-                                                    @click="remove(index)" />
+                                                <flux:button variant="subtle" size="xs" color="red"
+                                                    icon="trash" @click="remove(index)" />
                                             </div>
                                         </template>
                                     </div>

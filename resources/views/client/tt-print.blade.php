@@ -298,6 +298,24 @@
                             <p class="text-[12pt] mt-1 text-center leading-tight">
                                 I hereby certify that the vehicle was used on official business as stated above.
                             </p>
+                            <div class="flex-1 flex flex-col mt-1 text-[10pt] text-left ">
+                                <div class="flex items-end mb-1">
+                                    <span class="font-bold mr-1">1.</span>
+                                    <span class="flex-1 border-b border-black"></span>
+                                </div>
+                                <div class="flex items-end mb-1">
+                                    <span class="font-bold mr-1">3.</span>
+                                    <span class="flex-1 border-b border-black"></span>
+                                </div>
+                                <div class="flex items-end mb-1">
+                                    <span class="font-bold mr-1">2.</span>
+                                    <span class="flex-1 border-b border-black"></span>
+                                </div>
+                                <div class="flex items-end">
+                                    <span class="font-bold mr-1">4.</span>
+                                    <span class="flex-1 border-b border-black"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

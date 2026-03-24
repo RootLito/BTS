@@ -11,6 +11,11 @@ class Driver extends Model
 
     protected $fillable = ['name', 'contact', 'status', 'vehicle_id'];
 
+    public function latestTrip()
+    {
+        return $this->hasOne(TripTicket::class)->latestOfMany();
+    }
+
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);

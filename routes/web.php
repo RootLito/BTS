@@ -37,9 +37,9 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('/booking/{tripTicket}', [TripTicketController::class, 'showAdmin'])->name('admin.booking.show');
     Route::put('/booking/{tripTicket}', [TripTicketController::class, 'update'])->name('admin.booking.update');
 
-    Route::get('/book', function () {
-        return view('admin.book');
-    })->name('admin.book');
+
+     Route::get('/book', [TripTicketController::class, 'adminBook'])->name('admin.book');
+
     Route::post('/book', [TripTicketController::class, 'storeBooking'])
         ->name('book.store');
     Route::delete('/admin/bookings/{ticket}', [TripTicketController::class, 'destroyBooking'])

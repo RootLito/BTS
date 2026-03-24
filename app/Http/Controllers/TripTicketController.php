@@ -7,6 +7,8 @@ use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 
 class TripTicketController extends Controller
 {
@@ -14,21 +16,65 @@ class TripTicketController extends Controller
     {
         parent::__construct();
     }
+    // public function index()
+    // {
+    //     $tickets = TripTicket::with(['driver', 'vehicle'])
+    //         ->latest()
+    //         ->get();
+
+    //     $drivers = Driver::all();
+    //     $vehicles = Vehicle::all();
+
+    //     return view('client.booking', compact(
+    //         'tickets',
+    //         'drivers',
+    //         'vehicles'
+    //     ));
+    // }
     public function index()
     {
-        $tickets = TripTicket::with(['driver', 'vehicle'])
-            ->latest()
-            ->get();
+        $drivers = Driver::with('latestTrip')
+            ->get()
+            ->sortBy(function ($driver) {
+                return match (strtolower($driver->status)) {
+                    'available' => 1,
+                    'on trip' => 2,
+                    default => 3,
+                };
+            });
 
-        $drivers = Driver::all();
+        $tickets = TripTicket::with(['driver', 'vehicle'])->latest()->get();
         $vehicles = Vehicle::all();
+
+        $events = TripTicket::all()->map(function ($ticket) {
+            $startDate = Carbon::parse($ticket->start_date);
+            $endDate = Carbon::parse($ticket->end_date);
+
+            return [
+                'title' => $ticket->destination,
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endDate->copy()->addDay()->format('Y-m-d'),
+                'color' => $ticket->status === 'Approved' ? '#10b981' : '#facc15',
+                'extendedProps' => [
+                    'office' => $ticket->office,
+                    'purpose' => $ticket->purpose,
+                    'driver' => $ticket->driver->name ?? 'No Driver',
+                    'status' => $ticket->status,
+                    'display_start' => $startDate->format('M d, Y'),
+                    'display_end' => $endDate->format('M d, Y'),
+                ]
+            ];
+        });
 
         return view('client.booking', compact(
             'tickets',
             'drivers',
-            'vehicles'
+            'vehicles',
+            'events'
         ));
     }
+
+
 
     public function indexAdmin(Request $request)
     {
@@ -49,7 +95,58 @@ class TripTicketController extends Controller
         $tickets->appends($request->all());
         $drivers = Driver::all();
         $vehicles = Vehicle::all();
-        return view('admin.booking', compact('tickets', 'drivers', 'vehicles'));
+
+        return view('admin.booking', compact(
+            'tickets',
+            'drivers',
+            'vehicles',
+        ));
+    }
+
+    public function adminBook(Request $request)
+    {
+        $query = TripTicket::with(['driver', 'vehicle']);
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->orWhere('destination', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+        $tickets = $query->latest()->paginate(9);
+        $tickets->appends($request->all());
+        $drivers = Driver::all();
+        $vehicles = Vehicle::all();
+        $events = TripTicket::all()->map(function ($ticket) {
+            $startDate = Carbon::parse($ticket->start_date);
+            $endDate = Carbon::parse($ticket->end_date);
+
+            return [
+                'title' => $ticket->destination,
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endDate->copy()->addDay()->format('Y-m-d'),
+                'color' => $ticket->status === 'Approved' ? '#10b981' : '#facc15',
+                'extendedProps' => [
+                    'office' => $ticket->office,
+                    'purpose' => $ticket->purpose,
+                    'driver' => $ticket->driver->name ?? 'No Driver',
+                    'status' => $ticket->status,
+                    'display_start' => $startDate->format('M d, Y'),
+                    'display_end' => $endDate->format('M d, Y'),
+                ]
+            ];
+        });
+        return view('admin.book', compact(
+            'tickets',
+            'drivers',
+            'vehicles',
+            'events'
+        ));
     }
 
     public function showAdmin(TripTicket $tripTicket)
@@ -257,7 +354,6 @@ class TripTicketController extends Controller
         return view('client.ticket', compact('tripTicket'));
     }
 
-    // 2. Update your update method to allow the new fields
     public function addInfo(Request $request, TripTicket $tripTicket)
     {
         $validated = $request->validate([

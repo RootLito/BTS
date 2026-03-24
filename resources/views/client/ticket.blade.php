@@ -1,6 +1,21 @@
 @extends('client.layout')
 
 @section('content')
+@php
+    $start = $tripTicket->start_date;
+    $end = $tripTicket->end_date;
+    
+    if ($start && $end) {
+        if ($start->format('Y-m') === $end->format('Y-m')) {
+            $formattedDate = $start->format('M. j') . '-' . $end->format('j, Y');
+        } else {
+            $formattedDate = $start->format('M. j') . ' - ' . $end->format('M. j, Y');
+        }
+    } else {
+        $formattedDate = $start ? $start->format('M. j, Y') : 'N/A';
+    }
+@endphp
+
 <div class="fixed inset-0 top-[65px] overflow-y-auto">
 
     <div class="w-[8.5in] h-10 mx-auto my-4 flex justify-between items-center">
@@ -14,10 +29,7 @@
         </div>
     </div>
 
-
-    <div
-        class="printable-folio bg-white mx-auto shadow-lg border border-gray-200 print:shadow-none print:border-none mb-4">
-        <img src="{{ asset('images/top.png') }}" alt="Travel Order Header" class="top">
+    <div class="printable-folio bg-white mx-auto shadow-lg border border-gray-200 print:shadow-none print:border-none mb-4">
         <div class="printable-folio bg-white mx-auto shadow-lg print:shadow-none mb-4">
             <img src="{{ asset('images/top.png') }}" alt="Header" class="top">
 
@@ -27,8 +39,7 @@
                 <div class="text-[9pt] mb-4 mt-2 leading-tight flex">
                     <strong>INSTRUCTIONS:</strong>
                     <ul class="list-none p-0 ms-6">
-                        <li>1. To be filled up in four (4) copies by the person requesting use of Department vehicle.
-                        </li>
+                        <li>1. To be filled up in four (4) copies by the person requesting use of Department vehicle.</li>
                         <li>2. Original to driver to be returned to ICU upon completion.</li>
                         <li>3. Duplicate to Security Guard on duty for monitoring and gate passage.</li>
                     </ul>
@@ -44,7 +55,7 @@
                         <div class="flex-1 flex flex-col">
                             <div class="flex-1 flex items-end">
                                 <span class="flex-1 border-b border-black leading-none">
-                                    {{ $tripTicket->start_date->format('F d, Y') }}
+                                    {{ $formattedDate }}
                                 </span>
                             </div>
                             <div class="flex-1 flex items-end">
@@ -61,7 +72,7 @@
                             </div>
                             <div class="flex-1 flex items-end">
                                 <span class="font-bold me-4 leading-none">PLATE NO.:</span>
-                                <span class="flex-1 border-b border-black uppercase leading-none">
+                                <span class="flex-1 border-b border-black uppercase leading-none font-bold">
                                     {{ $tripTicket->vehicle->plate_no ?? 'N/A' }}
                                 </span>
                             </div>
@@ -73,82 +84,60 @@
                     <p class="font-bold">AUTHORIZED PASSENGER:</p>
                     <div class="flex-1 flex flex-col ms-30">
                         @php
-                        $passengers = array_map('trim', explode(',', $tripTicket->passengers2 ?? ''));
+                            $dbPassengers = is_array($tripTicket->passengers) ? $tripTicket->passengers : [];
+                            $extraPassengers = array_filter(array_map('trim', explode(',', $tripTicket->passengers2 ?? '')));
+                            $allPassengers = array_values(array_unique(array_merge($dbPassengers, $extraPassengers)));
                         @endphp
 
                         <div class="flex-1 flex gap-4 mb-2">
                             <div class="flex-1 flex items-end">
                                 <span class="font-bold mr-1 leading-none">1.</span>
-                                <span class="flex-1 border-b border-black uppercase leading-none">
-                                    {{ $passengers[0] ?? '' }}
-                                </span>
+                                <span class="flex-1 border-b border-black uppercase leading-none">{{ $allPassengers[0] ?? '' }}</span>
                             </div>
                             <div class="flex-1 flex items-end">
                                 <span class="font-bold mr-1 leading-none">4.</span>
-                                <span class="flex-1 border-b border-black uppercase leading-none">
-                                    {{ $passengers[3] ?? '' }}
-                                </span>
+                                <span class="flex-1 border-b border-black uppercase leading-none">{{ $allPassengers[3] ?? '' }}</span>
                             </div>
                         </div>
 
                         <div class="flex-1 flex gap-4 mb-2">
                             <div class="flex-1 flex items-end">
                                 <span class="font-bold mr-1 leading-none">2.</span>
-                                <span class="flex-1 border-b border-black uppercase leading-none">
-                                    {{ $passengers[1] ?? '' }}
-                                </span>
+                                <span class="flex-1 border-b border-black uppercase leading-none">{{ $allPassengers[1] ?? '' }}</span>
                             </div>
                             <div class="flex-1 flex items-end">
                                 <span class="font-bold mr-1 leading-none">5.</span>
-                                <span class="flex-1 border-b border-black uppercase leading-none">
-                                    {{ $passengers[4] ?? '' }}
-                                </span>
+                                <span class="flex-1 border-b border-black uppercase leading-none">{{ $allPassengers[4] ?? '' }}</span>
                             </div>
                         </div>
 
                         <div class="flex-1 flex gap-4 mb-2">
                             <div class="flex-1 flex items-end">
                                 <span class="font-bold mr-1 leading-none">3.</span>
-                                <span class="flex-1 border-b border-black uppercase leading-none">
-                                    {{ $passengers[2] ?? '' }}
-                                </span>
+                                <span class="flex-1 border-b border-black uppercase leading-none">{{ $allPassengers[2] ?? '' }}</span>
                             </div>
                             <div class="flex-1 flex items-end">
                                 <span class="font-bold mr-1 leading-none">6.</span>
-                                <span class="flex-1 border-b border-black uppercase leading-none">
-                                    {{ $passengers[5] ?? '' }}
-                                </span>
+                                <span class="flex-1 border-b border-black uppercase leading-none">{{ $allPassengers[5] ?? '' }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div class="flex text-[10pt] mb-6 mt-4">
                     <p><strong>DESTINATION:</strong></p>
                     <div class="flex-1 flex flex-col ms-8">
                         @php
-                        $destinations = array_map('trim', explode(',', $tripTicket->destination ?? ''));
+                            $destinations = array_map('trim', explode(',', $tripTicket->destination ?? ''));
                         @endphp
-
-                        <div class="flex-1 flex items-end mb-2">
-                            <span class="font-bold mr-1 leading-none">1.</span>
+                        @for($i = 0; $i < 3; $i++)
+                        <div class="flex-1 flex items-end {{ $i < 2 ? 'mb-2' : '' }}">
+                            <span class="font-bold mr-1 leading-none">{{ $i + 1 }}.</span>
                             <span class="flex-1 border-b border-black uppercase leading-none">
-                                {{ $destinations[0] ?? '' }}
+                                {{ $destinations[$i] ?? '' }}
                             </span>
                         </div>
-
-                        <div class="flex-1 flex items-end mb-2">
-                            <span class="font-bold mr-1 leading-none">2.</span>
-                            <span class="flex-1 border-b border-black uppercase leading-none">
-                                {{ $destinations[1] ?? '' }}
-                            </span>
-                        </div>
-
-                        <div class="flex-1 flex items-end">
-                            <span class="font-bold mr-1 leading-none">3.</span>
-                            <span class="flex-1 border-b border-black uppercase leading-none">
-                                {{ $destinations[2] ?? '' }}
-                            </span>
-                        </div>
+                        @endfor
                     </div>
                 </div>
 
@@ -156,34 +145,24 @@
                     <p><strong>PURPOSE:</strong></p>
                     <div class="flex-1 flex flex-col ms-14">
                         @php
-                        $purposes = array_map('trim', explode(',', $tripTicket->purpose2 ?? ''));
+                            $purposeData = !empty($tripTicket->purpose2) ? $tripTicket->purpose2 : $tripTicket->purpose;
+                            $purposes = array_map('trim', explode(',', $purposeData ?? ''));
                         @endphp
-                        <div class="flex-1 flex items-end mb-2">
-                            <span class="font-bold mr-1 leading-none">1.</span>
+                        @for($i = 0; $i < 3; $i++)
+                        <div class="flex-1 flex items-end {{ $i < 2 ? 'mb-2' : '' }}">
+                            <span class="font-bold mr-1 leading-none">{{ $i + 1 }}.</span>
                             <span class="flex-1 border-b border-black uppercase leading-none">
-                                {{ $purposes[0] ?? '' }}
+                                {{ $purposes[$i] ?? '' }}
                             </span>
                         </div>
-
-                        <div class="flex-1 flex items-end mb-2">
-                            <span class="font-bold mr-1 leading-none">2.</span>
-                            <span class="flex-1 border-b border-black uppercase leading-none">
-                                {{ $purposes[1] ?? '' }}
-                            </span>
-                        </div>
-                        <div class="flex-1 flex items-end">
-                            <span class="font-bold mr-1 leading-none">3.</span>
-                            <span class="flex-1 border-b border-black uppercase leading-none">
-                                {{ $purposes[2] ?? '' }}
-                            </span>
-                        </div>
+                        @endfor
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-20 text-center text-[10pt] mb-6 px-4">
                     <div>
                         <p class="font-bold">RECOMMENDED BY:</p>
-                        <div class="mt-4 border-b border-black font-bold uppercase">{{ $tripTicket->supervisor}}</div>
+                        <div class="mt-4 border-b border-black font-bold uppercase">{{ $tripTicket->supervisor }}</div>
                         <p class="text-[10pt]">Immediate Supervisor</p>
                     </div>
                     <div>
@@ -197,8 +176,7 @@
                     <thead>
                         <tr>
                             <th colspan="5">
-                                <p class="italic text-[10pt] text-left font-medium ">To be filled up only by the driver
-                                    after each trip</p>
+                                <p class="italic text-[10pt] text-left font-medium ">To be filled up only by the driver after each trip</p>
                             </th>
                         </tr>
                         <tr>
@@ -214,14 +192,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for($i=0; $i < 8; $i++) <tr>
+                        @for($i=0; $i < 8; $i++) 
+                        <tr>
+                            <td>&nbsp;</td>
                             <td></td>
                             <td></td>
                             <td></td>
                             <td></td>
-                            <td></td>
-                            </tr>
-                            @endfor
+                        </tr>
+                        @endfor
                     </tbody>
                 </table>
 
@@ -229,67 +208,29 @@
                     <div class="space-y-1 flex-1">
                         <p class="font-bold">GASOLINE USAGE:</p>
                         <div class="space-y-0 text-[12pt] font-bold leading-none mt-6">
-                            <div class="flex items-end mb-1">
-                                <span class="w-40">Balance in Tank</span>
+                            @foreach(['Balance in Tank', 'Issued from stock', 'Purchase Outside', 'Total', 'Gasoline Used', 'Balance in Tank', 'Distance Travelled'] as $label)
+                            <div class="flex items-end mb-1 {{ in_array($label, ['Purchase Outside', 'Gasoline Used']) ? 'mt-4' : '' }}">
+                                <span class="w-40">{{ $label }}</span>
                                 <span class="w-12 border-b border-black"></span>
-                                <span class="ml-1">ltrs.</span>
+                                <span class="ml-1">{{ $label === 'Distance Travelled' ? '' : 'ltrs.' }}</span>
                             </div>
-                            <div class="flex items-end mb-1">
-                                <span class="w-40">Issued from stock</span>
-                                <span class="w-12 border-b border-black"></span>
-                                <span class="ml-1">ltrs.</span>
-                            </div>
-                            <div class="flex items-end mb-1 mt-4">
-                                <span class="w-40">Purchase Outside</span>
-                                <span class="w-12 border-b border-black"></span>
-                                <span class="ml-1">ltrs.</span>
-                            </div>
-                            <div class="flex items-end mb-1">
-                                <span class="w-40">Total</span>
-                                <span class="w-12 border-b border-black"></span>
-                                <span class="ml-1">ltrs.</span>
-                            </div>
-                            <div class="flex items-end mb-1 mt-4">
-                                <span class="w-40">Gasoline Used</span>
-                                <span class="w-12 border-b border-black"></span>
-                                <span class="ml-1">ltrs.</span>
-                            </div>
-                            <div class="flex items-end mb-1">
-                                <span class="w-40">Balance in Tank</span>
-                                <span class="w-12 border-b border-black"></span>
-                                <span class="ml-1">ltrs.</span>
-                            </div>
-                            <div class="flex items-end">
-                                <span class="w-40">Distance Travelled</span>
-                                <span class="w-12 border-b border-black"></span>
-                                <span class="ml-1"></span>
-                            </div>
+                            @endforeach
                         </div>
                     </div>
                     <div class="text-center flex-1">
                         <p class="font-bold">CERTIFIED CORRECT:</p>
-                        <div class="mt-6 font-bold underline">ROMEO P. DEGORIO JR.</div>
+                        <div class="mt-6 font-bold underline uppercase">{{ $tripTicket->driver->name ?? 'N/A' }}</div>
                         <p>DRIVER</p>
                         <p class="text-[12pt] mt-1 text-center leading-tight">
                             I hereby certify that the vehicle was used on official business as stated above.
                         </p>
                         <div class="flex-1 flex flex-col mt-1 text-[10pt] text-left ">
+                            @for($n = 1; $n <= 4; $n++)
                             <div class="flex items-end mb-1">
-                                <span class="font-bold mr-1">1.</span>
+                                <span class="font-bold mr-1">{{ $n }}.</span>
                                 <span class="flex-1 border-b border-black"></span>
                             </div>
-                            <div class="flex items-end mb-1">
-                                <span class="font-bold mr-1">3.</span>
-                                <span class="flex-1 border-b border-black"></span>
-                            </div>
-                            <div class="flex items-end mb-1">
-                                <span class="font-bold mr-1">2.</span>
-                                <span class="flex-1 border-b border-black"></span>
-                            </div>
-                            <div class="flex items-end">
-                                <span class="font-bold mr-1">4.</span>
-                                <span class="flex-1 border-b border-black"></span>
-                            </div>
+                            @endfor
                         </div>
                     </div>
                 </div>
@@ -303,19 +244,13 @@
     <form action="{{ route('client.trip-ticket.add-info', $tripTicket->id) }}" method="POST" class="space-y-6">
         @csrf
         @method('PATCH')
-
         <div>
             <flux:heading size="lg">Add Ticket Details</flux:heading>
-            <flux:text class="mt-2">Enter the details for this trip ticket. Use commas for multiple passengers.
-            </flux:text>
+            <flux:text class="mt-2">Enter the details for this trip ticket. Use commas for multiple passengers.</flux:text>
         </div>
-
-        <flux:input label="Purpose" name="purpose2" placeholder="Enter trip purpose..." />
-
-        <flux:input label="Passenger(s)" name="passengers2" placeholder="Ex: Kenneth, Angelito" />
-
-        <flux:input label="Immediate Supervisor" name="supervisor" placeholder="Enter supervisor name..." />
-
+        <flux:input label="Purpose" name="purpose2" value="{{ $tripTicket->purpose2 }}" placeholder="Enter trip purpose..." />
+        <flux:input label="Passenger(s)" name="passengers2" value="{{ $tripTicket->passengers2 }}" placeholder="Ex: Kenneth, Angelito" />
+        <flux:input label="Immediate Supervisor" name="supervisor" value="{{ $tripTicket->supervisor }}" placeholder="Enter supervisor name..." />
         <div class="flex">
             <flux:spacer />
             <flux:button type="submit" variant="primary" color="emerald">Save Details</flux:button>
