@@ -265,7 +265,6 @@ class TripTicketController extends Controller
     {
         $request->validate(['driver_id' => 'nullable|exists:drivers,id']);
 
-        // 1. Reset Old Driver/Vehicle Status to Available
         if ($tripTicket->driver_id) {
             Driver::where('id', $tripTicket->driver_id)->update(['status' => 'Available']);
         }
@@ -273,7 +272,6 @@ class TripTicketController extends Controller
             Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'Available']);
         }
 
-        // 2. Assign New Driver
         if ($request->driver_id) {
             $driver = Driver::with('vehicle')->findOrFail($request->driver_id);
 
@@ -282,58 +280,112 @@ class TripTicketController extends Controller
                 'vehicle_id' => $driver->vehicle_id,
             ]);
 
-            // If trip is already Approved, mark new driver as "On Trip"
             if ($tripTicket->status === 'Approved') {
                 $driver->update(['status' => 'On Trip']);
                 if ($driver->vehicle)
                     $driver->vehicle->update(['status' => 'On Trip']);
             }
 
-            // Send Notification for Driver Assignment
             Notification::create([
                 'trip_id' => $tripTicket->id,
                 'message' => "Driver {$driver->name} has been assigned to your trip to {$tripTicket->destination}.",
                 'is_admin' => false,
             ]);
         } else {
-            // Unassign everything
             $tripTicket->update(['driver_id' => null, 'vehicle_id' => null]);
         }
 
         return redirect()->back()->with('success', 'Driver assignment updated!');
     }
 
-    // FUNCTION 2: Only handles Approval/Cancellation
+    // public function updateStatus(Request $request, TripTicket $tripTicket)
+    // {
+    //     $request->validate(['status' => 'required|in:Approved,Cancelled,Completed']);
+    //     $newStatus = $request->status;
+
+    //     if ($newStatus === 'Approved') {
+    //         if ($tripTicket->driver_id)
+    //             Driver::where('id', $tripTicket->driver_id)->update(['status' => 'On Trip']);
+    //         if ($tripTicket->vehicle_id)
+    //             Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'On Trip']);
+
+    //         Notification::create([
+    //             'trip_id' => $tripTicket->id,
+    //             'message' => "Your trip ticket to {$tripTicket->destination} has been Approved!",
+    //             'is_admin' => false,
+    //         ]);
+    //     } else if (in_array($newStatus, ['Cancelled', 'Completed'])) {
+    //         if ($tripTicket->driver_id)
+    //             Driver::where('id', $tripTicket->driver_id)->update(['status' => 'Available']);
+    //         if ($tripTicket->vehicle_id)
+    //             Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'Available']);
+
+    //     }
+
+    //     $tripTicket->update(['status' => $newStatus]);
+
+    //     return redirect()->back()->with('success', "Trip marked as {$newStatus}!");
+    // }
     public function updateStatus(Request $request, TripTicket $tripTicket)
     {
-        $request->validate(['status' => 'required|in:Approved,Cancelled,Completed']);
+        $request->validate([
+            'status' => 'required|in:Approved,Cancelled,Completed',
+            'note' => 'required_if:status,Cancelled|nullable|string|max:500',
+        ]);
+
         $newStatus = $request->status;
 
-        // 1. Update Driver/Vehicle Status based on the move
-        if ($newStatus === 'Approved') {
+        // 1. Logic for Cancellation (Note and Notification)
+        if ($newStatus === 'Cancelled') {
+            // Create the Note record for history
+            if ($request->filled('note')) {
+                \App\Models\Note::create([
+                    'trip_id' => $tripTicket->id,
+                    'client_id' => $tripTicket->client_id,
+                    'note' => $request->note,
+                    'is_read' => false,
+                ]);
+            }
+
+            // Send cancellation notification
+            Notification::create([
+                'trip_id' => $tripTicket->id,
+                'message' => "Trip to {$tripTicket->destination} was Cancelled. Reason: " . ($request->note ?? 'Not specified'),
+                'is_admin' => false,
+            ]);
+
+            // Release Driver and Vehicle
+            if ($tripTicket->driver_id)
+                Driver::where('id', $tripTicket->driver_id)->update(['status' => 'Available']);
+            if ($tripTicket->vehicle_id)
+                Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'Available']);
+        }
+
+        // 2. Logic for Approval
+        else if ($newStatus === 'Approved') {
             if ($tripTicket->driver_id)
                 Driver::where('id', $tripTicket->driver_id)->update(['status' => 'On Trip']);
             if ($tripTicket->vehicle_id)
                 Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'On Trip']);
 
-            // STORE NOTIFICATION ONLY ON APPROVE
             Notification::create([
                 'trip_id' => $tripTicket->id,
-                'message' => "Your trip ticket to {$tripTicket->destination} has been Approved!",
+                'message' => "Your trip to {$tripTicket->destination} has been Approved!",
                 'is_admin' => false,
             ]);
-        } else if (in_array($newStatus, ['Cancelled', 'Completed'])) {
+        }
+
+        // 3. Logic for Completion
+        else if ($newStatus === 'Completed') {
             if ($tripTicket->driver_id)
                 Driver::where('id', $tripTicket->driver_id)->update(['status' => 'Available']);
             if ($tripTicket->vehicle_id)
                 Vehicle::where('id', $tripTicket->vehicle_id)->update(['status' => 'Available']);
-
-            // NO notification stored here as per your request
         }
 
         $tripTicket->update(['status' => $newStatus]);
 
-        return redirect()->back()->with('success', "Trip marked as {$newStatus}!");
+        return redirect()->back()->with('success', "Trip status updated to {$newStatus}");
     }
 
 

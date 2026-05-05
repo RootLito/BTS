@@ -23,32 +23,32 @@
 
         <flux:sidebar.nav>
             <flux:sidebar.item icon="home" :href="route('admin.dashboard')"
-                :current="request()->routeIs('admin.dashboard')" class="py-2">
+                :current="request()->routeIs('admin.dashboard')" class="py-4!">
                 Dashboard
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="calendar" :href="route('admin.book')"
-                :current="request()->routeIs('admin.book')">
+                :current="request()->routeIs('admin.book')" class="py-4!">
                 Booking
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="ticket" :href="route('admin.booking')"
-                :current="request()->routeIs('admin.booking*')">
+                :current="request()->routeIs('admin.booking*')" class="py-4!">
                 Trips
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="user" :href="route('admin.driver')"
-                :current="request()->routeIs('admin.driver')">
+                :current="request()->routeIs('admin.driver')" class="py-4!">
                 Driver
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="truck" :href="route('admin.vehicle')"
-                :current="request()->routeIs('admin.vehicle')">
+                :current="request()->routeIs('admin.vehicle')" class="py-4!">
                 Vehicle
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="bell" :href="route('admin.notification')"
-                :current="request()->routeIs('admin.notification')">
+                :current="request()->routeIs('admin.notification')" class="py-4!">
                 <div class="flex items-center w-full">
                     <span>Notification</span>
 

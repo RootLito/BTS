@@ -98,7 +98,8 @@
 
                             <div class="flex-1">
                                 <flux:label size="sm" class="mb-2">Change or Assign Driver</flux:label>
-                                <flux:select name="driver_id" searchable placeholder="Select driver..." size="sm">
+                                <flux:select name="driver_id" searchable placeholder="Select driver..." size="sm"
+                                    :disabled="in_array($tripTicket->status, ['Cancelled', 'Completed'])">
                                     <flux:select.option value="" :selected="!$tripTicket->driver_id">
                                         Don't Assign
                                     </flux:select.option>
@@ -123,7 +124,8 @@
                                 </flux:select>
                             </div>
 
-                            <flux:button type="submit" variant="primary" color="emerald" icon="check" size="sm">
+                            <flux:button type="submit" variant="primary" color="emerald" icon="check" size="sm"
+                                :disabled="in_array($tripTicket->status, ['Cancelled', 'Completed'])">
                                 Update
                             </flux:button>
                         </form>
@@ -177,54 +179,55 @@
             </div>
 
             <div class="space-y-6">
-                {{-- <flux:card>
-                    <div class="flex items-center justify-between mb-4">
-                        <flux:heading size="sm">Documents</flux:heading>
-                        <flux:badge size="sm" variant="subtle" color="zinc">Pending Release</flux:badge>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div
-                            class="flex items-center justify-between p-3 border border-dashed rounded-lg border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <flux:icon name="document-text" class="text-zinc-400" />
-                                <flux:text size="sm" class="font-medium">Travel Order</flux:text>
-                            </div>
-                            <flux:button variant="subtle" size="xs" icon="eye" />
-                        </div>
-
-                        <div
-                            class="flex items-center justify-between p-3 border border-dashed rounded-lg border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <flux:icon name="ticket" class="text-zinc-400" />
-                                <flux:text size="sm" class="font-medium">Trip Ticket</flux:text>
-                            </div>
-                            <flux:button variant="subtle" size="xs" icon="eye" />
-                        </div>
-                        <flux:button variant="filled" color="zinc" class="w-full" icon="paper-airplane">
-                            Release Documents
-                        </flux:button>
-                    </div>
-                </flux:card> --}}
-
                 <flux:card>
                     <flux:heading size="sm" class="mb-4">Actions</flux:heading>
 
-                    <form action="{{ route('admin.booking.status', $tripTicket->id) }}" method="POST"
-                        class="flex flex-col gap-2">
-                        @csrf @method('PUT')
+                    <div class="flex flex-col gap-2">
+                        {{-- Approve Trip --}}
+                        <form action="{{ route('admin.booking.status', $tripTicket->id) }}" method="POST">
+                            @csrf @method('PUT')
+                            <input type="hidden" name="status" value="Approved">
+                            <flux:button type="submit" variant="primary" color="emerald" icon="check" class="w-full"
+                                :disabled="in_array($tripTicket->status, ['Approved', 'Cancelled', 'Completed'])">
+                                Approve Trip
+                            </flux:button>
+                        </form>
 
-                        <flux:button type="submit" name="status" value="Approved" variant="primary" color="emerald"
-                            icon="check" :disabled="$tripTicket->status === 'Approved'">
-                            Approve Trip
-                        </flux:button>
-
-                        <flux:button type="submit" name="status" value="Cancelled" variant="filled" color="red"
-                            icon="x-mark" :disabled="$tripTicket->status === 'Cancelled'">
-                            Cancel Trip
-                        </flux:button>
-                    </form>
+                        {{-- Cancel Trip --}}
+                        <flux:modal.trigger name="cancel-modal">
+                            <flux:button variant="filled" color="red" icon="x-mark" class="w-full"
+                                :disabled="in_array($tripTicket->status, ['Approved', 'Cancelled', 'Completed'])">
+                                Cancel Trip
+                            </flux:button>
+                        </flux:modal.trigger>
+                    </div>
                 </flux:card>
+
+                {{-- Cancellation Modal --}}
+                <flux:modal name="cancel-modal" class="md:w-[450px]">
+                    <form action="{{ route('admin.booking.status', $tripTicket->id) }}" method="POST" class="space-y-6">
+                        @csrf @method('PUT')
+                        <input type="hidden" name="status" value="Cancelled">
+
+                        <div>
+                            <flux:heading size="lg">Cancel Trip</flux:heading>
+                            <flux:text>Please provide a reason for cancelling Trip
+                                #{{ str_pad($tripTicket->id, 4, '0', STR_PAD_LEFT) }}.</flux:text>
+                        </div>
+
+                        <flux:textarea label="Cancellation Note" name="note" placeholder="Reason for cancellation..."
+                            required />
+
+                        <div class="flex gap-2">
+                            <flux:spacer />
+                            <flux:modal.close>
+                                <flux:button variant="ghost">Go Back</flux:button>
+                            </flux:modal.close>
+                            <flux:button type="submit" variant="filled" color="red">Confirm Cancellation
+                            </flux:button>
+                        </div>
+                    </form>
+                </flux:modal>
             </div>
         </div>
     </div>

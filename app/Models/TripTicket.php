@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TripTicket extends Model
 {
     protected $fillable = [
         'client_id',
-        'office',     
+        'office',
         'purpose',
         'destination',
         'start_date',
@@ -37,5 +38,10 @@ class TripTicket extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class, 'trip_id');
     }
 }
