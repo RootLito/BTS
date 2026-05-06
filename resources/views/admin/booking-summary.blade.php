@@ -98,38 +98,64 @@
 
                             <div class="flex-1">
                                 <flux:label size="sm" class="mb-2">Change or Assign Driver</flux:label>
-                                <flux:select name="driver_id" searchable placeholder="Select driver..." size="sm"
-                                    :disabled="in_array($tripTicket->status, ['Cancelled', 'Completed'])">
-                                    <flux:select.option value="" :selected="!$tripTicket->driver_id">
-                                        Don't Assign
-                                    </flux:select.option>
 
-                                    @foreach ($drivers as $driver)
-                                        @php
-                                            $isAssigned = $tripTicket->driver_id == $driver->id;
-                                            if ($driver->status !== 'Available' && !$isAssigned) {
-                                                continue;
-                                            }
-                                        @endphp
+                                <div class="flex-1 flex gap-2">
+                                    <flux:dropdown class="flex-1">
+                                        <flux:button variant="filled" icon-trailing="chevron-down" size="sm"
+                                            class="w-full justify-start gap-2">
+                                            {{ $tripTicket->driver->name ?? 'Select a Driver...' }}
+                                        </flux:button>
 
-                                        <flux:select.option value="{{ $driver->id }}" :selected="$isAssigned">
-                                            {{ $driver->name }}
-                                            — {{ $driver->vehicle->vehicle ?? 'No Vehicle' }}
+                                        <flux:menu class="min-w-[250px]">
+                                            <form action="{{ route('admin.booking.assign', $tripTicket->id) }}"
+                                                method="POST">
+                                                @csrf @method('PUT')
+                                                <input type="hidden" name="driver_id" value="">
+                                                <flux:menu.item type="submit" :selected="!$tripTicket->driver_id">
+                                                    Select Driver
+                                                </flux:menu.item>
+                                            </form>
 
-                                            @if ($driver->status !== 'Available')
-                                                ({{ $driver->status }})
-                                            @endif
-                                        </flux:select.option>
-                                    @endforeach
-                                </flux:select>
+                                            <flux:menu.separator />
+
+                                            @foreach ($drivers as $driver)
+                                                @php
+                                                    $isAssigned = $tripTicket->driver_id == $driver->id;
+                                                    $isBusyOnTheseDates = $driver->is_busy && !$isAssigned;
+                                                @endphp
+
+                                                <form action="{{ route('admin.booking.assign', $tripTicket->id) }}"
+                                                    method="POST">
+                                                    @csrf @method('PUT')
+                                                    <input type="hidden" name="driver_id" value="{{ $driver->id }}">
+
+                                                    <flux:menu.item type="submit" :disabled="$isBusyOnTheseDates"
+                                                        :selected="$isAssigned">
+                                                        <div class="flex flex-col">
+                                                            <span>{{ $driver->name }}</span>
+                                                            <span class="text-xs text-zinc-500">
+                                                                {{ $driver->vehicle->vehicle ?? 'No Vehicle' }}
+                                                                @if ($isBusyOnTheseDates)
+                                                                    — <span
+                                                                        class="text-red-500 font-semibold italic">Not available on this date(s)</span>
+                                                                @elseif ($driver->status !== 'Available')
+                                                                    — ({{ $driver->status }})
+                                                                @endif
+                                                            </span>
+                                                        </div>
+                                                    </flux:menu.item>
+                                                </form>
+                                            @endforeach
+                                        </flux:menu>
+                                    </flux:dropdown>
+                                    <flux:button type="submit" variant="primary" color="emerald" icon="check"
+                                        size="sm" :disabled="in_array($tripTicket->status, ['Cancelled', 'Completed'])"
+                                        class="w-64">
+                                        Update
+                                    </flux:button>
+                                </div>
                             </div>
-
-                            <flux:button type="submit" variant="primary" color="emerald" icon="check" size="sm"
-                                :disabled="in_array($tripTicket->status, ['Cancelled', 'Completed'])">
-                                Update
-                            </flux:button>
                         </form>
-
                     </div>
 
                     <div class="flex items-stretch gap-6">
@@ -183,7 +209,6 @@
                     <flux:heading size="sm" class="mb-4">Actions</flux:heading>
 
                     <div class="flex flex-col gap-2">
-                        {{-- Approve Trip --}}
                         <form action="{{ route('admin.booking.status', $tripTicket->id) }}" method="POST">
                             @csrf @method('PUT')
                             <input type="hidden" name="status" value="Approved">
@@ -193,9 +218,8 @@
                             </flux:button>
                         </form>
 
-                        {{-- Cancel Trip --}}
                         <flux:modal.trigger name="cancel-modal">
-                            <flux:button variant="filled" color="red" icon="x-mark" class="w-full"
+                            <flux:button variant="danger" icon="x-mark" class="w-full"
                                 :disabled="in_array($tripTicket->status, ['Approved', 'Cancelled', 'Completed'])">
                                 Cancel Trip
                             </flux:button>
@@ -203,9 +227,9 @@
                     </div>
                 </flux:card>
 
-                {{-- Cancellation Modal --}}
                 <flux:modal name="cancel-modal" class="md:w-[450px]">
-                    <form action="{{ route('admin.booking.status', $tripTicket->id) }}" method="POST" class="space-y-6">
+                    <form action="{{ route('admin.booking.status', $tripTicket->id) }}" method="POST"
+                        class="space-y-6">
                         @csrf @method('PUT')
                         <input type="hidden" name="status" value="Cancelled">
 
@@ -223,7 +247,7 @@
                             <flux:modal.close>
                                 <flux:button variant="ghost">Go Back</flux:button>
                             </flux:modal.close>
-                            <flux:button type="submit" variant="filled" color="red">Confirm Cancellation
+                            <flux:button type="submit" variant="danger">Confirm Cancellation
                             </flux:button>
                         </div>
                     </form>

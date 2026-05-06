@@ -30,11 +30,19 @@ class AdminController extends Controller
             $startDate = Carbon::parse($ticket->start_date);
             $endDate = Carbon::parse($ticket->end_date);
 
+            $statusColor = match ($ticket->status) {
+                'Pending' => '#eab308', 
+                'Approved' => '#3b82f6', 
+                'Cancelled' => '#ef4444', 
+                'Completed' => '#10b981',
+                default => '#71717a', 
+            };
+
             return [
                 'title' => $ticket->destination,
                 'start' => $startDate->format('Y-m-d'),
-                'end'   => $endDate->copy()->addDay()->format('Y-m-d'),
-                'color' => $ticket->status === 'Approved' ? '#10b981' : '#facc15',
+                'end' => $endDate->copy()->addDay()->format('Y-m-d'),
+                'color' => $statusColor,
                 'extendedProps' => [
                     'office' => $ticket->office,
                     'purpose' => $ticket->purpose,

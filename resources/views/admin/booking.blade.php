@@ -101,9 +101,9 @@
                                 @php
                                     $statusColor = match ($ticket->status) {
                                         'Pending' => 'yellow',
-                                        'Approved' => 'emerald',
+                                        'Approved' => 'blue',
                                         'Cancelled' => 'red',
-                                        'Completed' => 'blue',
+                                        'Completed' => 'emerald',
                                         default => 'zinc',
                                     };
                                 @endphp
