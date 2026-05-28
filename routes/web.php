@@ -38,7 +38,7 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::put('/booking/{tripTicket}', [TripTicketController::class, 'update'])->name('admin.booking.update');
 
 
-     Route::get('/book', [TripTicketController::class, 'adminBook'])->name('admin.book');
+    Route::get('/book', [TripTicketController::class, 'adminBook'])->name('admin.book');
 
     Route::post('/book', [TripTicketController::class, 'storeBooking'])
         ->name('book.store');
@@ -108,6 +108,8 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
         ->name('client.travel-order.show');
     Route::patch('/client/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])
         ->name('client.travel-order.store');
+    Route::post('/client/travel-order/{tripTicket}/track', [TravelOrderController::class, 'track'])
+        ->name('client.travel-order.track');
 
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'clientRead'])->name('client.notification.read');
 

@@ -270,23 +270,32 @@ class TripTicketController extends Controller
 
     public function tripTicket(Request $request)
     {
-        $query = TripTicket::with(['driver', 'vehicle'])
+        // Eager load using the exact relationship name from your TripTicket model
+        $query = TripTicket::with(['driver', 'vehicle', 'documentTrackings'])
             ->where('client_id', auth()->id());
+
         $query->when($request->search, function ($q, $search) {
             $q->where(function ($inner) use ($search) {
                 $inner->where('destination', 'like', "%{$search}%")
                     ->orWhere('purpose', 'like', "%{$search}%");
             });
         });
+
         $sortOrder = $request->get('sort', 'latest');
         if ($sortOrder === 'oldest') {
             $query->oldest();
         } else {
             $query->latest();
         }
+
         $tickets = $query->paginate(8)->withQueryString();
+
         return view('client.trip-ticket', compact('tickets'));
     }
+
+
+
+
     public function store(Request $request)
     {
         $request->merge([

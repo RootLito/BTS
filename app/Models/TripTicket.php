@@ -44,4 +44,9 @@ class TripTicket extends Model
     {
         return $this->hasMany(Note::class, 'trip_id');
     }
+
+    public function documentTrackings(): HasMany
+    {
+        return $this->hasMany(DocumentTracking::class, 'trip_ticket_id');
+    }
 }

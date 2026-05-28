@@ -49,7 +49,6 @@
                 </flux:button>
             </form>
 
-            {{-- Table Card --}}
             <flux:card class="space-y-6 overflow-hidden">
                 <flux:table>
                     <flux:table.columns>
@@ -138,6 +137,9 @@
                                 </flux:table.cell>
 
                                 <flux:table.cell>
+                                    <flux:modal.trigger :name="'track-ticket-' . $ticket->id">
+                                        <flux:button icon="map">Track Status</flux:button>
+                                    </flux:modal.trigger>
                                     <flux:dropdown>
                                         <flux:button icon-trailing="chevron-down" class="text-sm">Actions</flux:button>
                                         <flux:menu>
@@ -164,6 +166,92 @@
                                             </flux:modal.trigger>
                                         </flux:menu>
                                     </flux:dropdown>
+
+                                    <flux:modal :name="'track-ticket-' . $ticket->id" class="md:w-[700px]">
+                                        <div class="space-y-6">
+                                            <div class="flex items-center gap-3">
+                                                <flux:icon name="map" class="size-6 text-emerald-500" />
+                                                <div>
+                                                    <flux:heading size="lg">Document Tracking Workflow</flux:heading>
+                                                    <flux:text size="sm" class="text-zinc-500">Real-time processing
+                                                        updates for your trip routing request.</flux:text>
+                                                </div>
+                                            </div>
+
+                                            @php
+                                                $definedRoutes = ['PMEU', 'BUDGET', 'ORD/OIC', 'ADMIN'];
+                                            @endphp
+
+                                            {{-- Horizontal Timeline Wrapper --}}
+                                            <div
+                                                class="relative flex items-start justify-between mt-8 before:absolute before:top-4 before:left-4 before:right-4 before:h-0.5 before:bg-zinc-200 dark:before:bg-zinc-700 before:-z-10">
+                                                @foreach ($definedRoutes as $index => $routeName)
+                                                    @php
+                                                        $stepData = $ticket->documentTrackings->firstWhere(
+                                                            'route',
+                                                            $routeName,
+                                                        );
+                                                        $hasStep = !is_null($stepData);
+                                                    @endphp
+
+                                                    <div class="flex flex-col items-center flex-1 text-center">
+                                                        {{-- Node Step Marker --}}
+                                                        <div
+                                                            class="flex items-center justify-center size-9 rounded-full border-2 transition-colors duration-200 shadow-sm bg-white dark:bg-zinc-800
+                            {{ $hasStep ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-zinc-300 text-zinc-400' }}">
+                                                            <span class="text-sm font-semibold">{{ $index + 1 }}</span>
+                                                        </div>
+
+                                                        {{-- Department Label --}}
+                                                        <span
+                                                            class="mt-2 text-xs font-bold tracking-wide uppercase {{ $hasStep ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400' }}">
+                                                            {{ $routeName }}
+                                                        </span>
+
+                                                        {{-- Timestamps Metadata --}}
+                                                        <div
+                                                            class="mt-3 space-y-1 text-[11px] px-1 w-full text-zinc-600 dark:text-zinc-400">
+                                                            {{-- Received Entry --}}
+                                                            <div
+                                                                class="flex flex-col items-center bg-zinc-50 dark:bg-zinc-900/50 p-1.5 rounded border border-zinc-100 dark:border-zinc-800/60">
+                                                                <span
+                                                                    class="text-[9px] text-zinc-400 font-medium uppercase tracking-tight">Received</span>
+                                                                @if ($hasStep && $stepData->date_received)
+                                                                    <span
+                                                                        class="font-medium text-zinc-800 dark:text-zinc-200 mt-0.5">
+                                                                        {{ \Carbon\Carbon::parse($stepData->date_received)->format('M d, h:i A') }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="text-zinc-400 italic mt-0.5">--:--</span>
+                                                                @endif
+                                                            </div>
+
+                                                            {{-- Released Entry --}}
+                                                            <div
+                                                                class="flex flex-col items-center bg-zinc-50 dark:bg-zinc-900/50 p-1.5 rounded border border-zinc-100 dark:border-zinc-800/60">
+                                                                <span
+                                                                    class="text-[9px] text-zinc-400 font-medium uppercase tracking-tight">Released</span>
+                                                                @if ($hasStep && $stepData->date_released)
+                                                                    <span
+                                                                        class="font-medium text-zinc-800 dark:text-zinc-200 mt-0.5">
+                                                                        {{ \Carbon\Carbon::parse($stepData->date_released)->format('M d, h:i A') }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="text-zinc-400 italic mt-0.5">--:--</span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                            <div class="flex justify-end pt-4">
+                                                <flux:modal.close>
+                                                    <flux:button variant="filled">Close Tracking</flux:button>
+                                                </flux:modal.close>
+                                            </div>
+                                        </div>
+                                    </flux:modal>
 
                                     {{-- VIEW MODAL (Unique to this row) --}}
                                     <flux:modal :name="'view-ticket-' . $ticket->id" class="md:w-[600px]">
@@ -268,8 +356,10 @@
                                 <flux:table.cell colspan="6" class="py-12 text-center">
                                     <div class="flex flex-col items-center justify-center space-y-2">
                                         <flux:icon name="map" class="size-8 text-zinc-400" />
-                                        <flux:text variant="strong" class="text-zinc-500">No trip tickets found</flux:text>
-                                        <flux:text size="sm" class="text-zinc-400">Your scheduled bookings will appear
+                                        <flux:text variant="strong" class="text-zinc-500">No trip tickets found
+                                        </flux:text>
+                                        <flux:text size="sm" class="text-zinc-400">Your scheduled bookings will
+                                            appear
                                             here.
                                         </flux:text>
                                     </div>

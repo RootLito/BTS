@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\TripTicket;
 use App\Models\TravelOrder;
+use App\Models\Client;
+use App\Models\DocumentTracking;
+use Flux\Flux;
 
 class TravelOrderController extends Controller
 {
@@ -70,7 +73,50 @@ class TravelOrderController extends Controller
                 'recommended_by' => [],
             ]);
         }
+        $latestTracking = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
+            ->latest()
+            ->first();
 
-        return view('client.travel-order', compact('travelOrder', 'tripTicket'));
+        $offices = Client::whereNotNull('office')
+            ->where('office', '!=', '')
+            ->pluck('office')
+            ->unique()
+            ->values();
+        return view('client.travel-order', compact('travelOrder', 'tripTicket', 'offices', 'latestTracking'));
+    }
+
+
+    public function track(Request $request, TripTicket $tripTicket)
+    {
+        $validated = $request->validate([
+            'route' => 'required|string',
+            'remarks' => 'nullable|string',
+        ]);
+
+        try {
+            DocumentTracking::create([
+                'trip_ticket_id' => $tripTicket->id,
+                'route' => $validated['route'],
+                'remarks' => $validated['remarks'],
+                'status' => 'Forwarded',
+                'date_released' => now(),
+                'date_received' => null,
+            ]);
+
+            Flux::toast(
+                variant: 'success',
+                heading: 'Document Forwarded',
+                text: 'Document successfully forwarded to ' . $validated['route']
+            );
+
+        } catch (\Exception $e) {
+            Flux::toast(
+                variant: 'danger',
+                heading: 'Action Failed',
+                text: 'Could not forward the document. Please try again.'
+            );
+        }
+
+        return redirect()->back();
     }
 }
