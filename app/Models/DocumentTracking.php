@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DocumentTracking extends Model
 {
-    // Explicitly defining the table name
     protected $table = 'document_trackings';
 
     protected $fillable = [
         'trip_ticket_id',
-        'route',
+        'document_no',
+        'route_from',     
+        'route_to',
         'status',
         'date_released',
         'date_received',
@@ -24,9 +25,7 @@ class DocumentTracking extends Model
         'date_received' => 'datetime',
     ];
 
-    /**
-     * Get the trip ticket associated with this tracking entry.
-     */
+
     public function tripTicket(): BelongsTo
     {
         return $this->belongsTo(TripTicket::class, 'trip_ticket_id');

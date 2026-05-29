@@ -97,7 +97,7 @@
             </div>
         </div>
 
-        <div class="flex-1 grid grid-cols-3 gap-10 min-h-0">
+        <div class="flex-1 grid grid-cols-3 gap-6 min-h-0">
             {{-- Calendar Column --}}
             <flux:card class="col-span-2 flex flex-col gap-6 overflow-hidden">
                 <flux:heading size="lg">Calendar</flux:heading>
@@ -154,7 +154,7 @@
             </flux:card>
 
             {{-- Summary Column --}}
-            <div class="col-span-1 flex flex-col gap-10">
+            <div class="col-span-1 flex flex-col gap-6">
                 <flux:card>
                     <form action="{{ route('trips.store') }}" method="POST" class="flex flex-col h-full">
                         @csrf

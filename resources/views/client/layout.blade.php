@@ -49,7 +49,14 @@
                 Travel Order
             </flux:navbar.item>
 
+            @if (\App\Models\DocumentTracking::where('route_to', auth()->user()->office)->where('status', 'Forwarded')->exists())
+                <flux:navbar.item icon="document-magnifying-glass" href="{{ route('client.document-tracking') }}"
+                    :current="request()->routeIs('client.document-tracking*')">
+                    Document Tracking
+                </flux:navbar.item>
+            @endif
         </flux:navbar>
+
         <flux:spacer />
         <flux:dropdown class="me-2">
             <div class="relative inline-block">
@@ -96,7 +103,6 @@
             </flux:menu>
         </flux:dropdown>
 
-        {{-- Create a hidden modal for every notification --}}
         @foreach ($clientNotifications as $notif)
             <flux:modal :name="'notif-modal-' . $notif->id" class="md:w-96">
                 <div class="space-y-4">

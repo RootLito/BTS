@@ -170,9 +170,10 @@
                                     <flux:modal :name="'track-ticket-' . $ticket->id" class="md:w-[700px]">
                                         <div class="space-y-6">
                                             <div class="flex items-center gap-3">
-                                                <flux:icon name="map" class="size-6 text-emerald-500" />
+                                                <flux:icon name="document-check" class="size-6 text-emerald-500" />
+
                                                 <div>
-                                                    <flux:heading size="lg">Document Tracking Workflow</flux:heading>
+                                                    <flux:heading size="lg">Document Tracking</flux:heading>
                                                     <flux:text size="sm" class="text-zinc-500">Real-time processing
                                                         updates for your trip routing request.</flux:text>
                                                 </div>
@@ -183,8 +184,7 @@
                                             @endphp
 
                                             {{-- Horizontal Timeline Wrapper --}}
-                                            <div
-                                                class="relative flex items-start justify-between mt-8 before:absolute before:top-4 before:left-4 before:right-4 before:h-0.5 before:bg-zinc-200 dark:before:bg-zinc-700 before:-z-10">
+                                            <div class="relative flex items-start justify-between mt-8 z-0">
                                                 @foreach ($definedRoutes as $index => $routeName)
                                                     @php
                                                         $stepData = $ticket->documentTrackings->firstWhere(
@@ -192,14 +192,44 @@
                                                             $routeName,
                                                         );
                                                         $hasStep = !is_null($stepData);
+
+                                                        // Determine if the next step exists in the log to shade the connecting line
+                                                        $nextRouteName = $definedRoutes[$index + 1] ?? null;
+                                                        $nextStepExists = $nextRouteName
+                                                            ? $ticket->documentTrackings->contains(
+                                                                'route',
+                                                                $nextRouteName,
+                                                            )
+                                                            : false;
+
+                                                        // Connecting line color indicator
+                                                        $lineColor =
+                                                            $hasStep && ($stepData->date_released || $nextStepExists)
+                                                                ? 'bg-emerald-500 dark:bg-emerald-500'
+                                                                : 'bg-zinc-200 dark:bg-zinc-700';
                                                     @endphp
 
-                                                    <div class="flex flex-col items-center flex-1 text-center">
+                                                    <div class="flex flex-col items-center flex-1 text-center relative">
+
+                                                        {{-- Connecting Line Segments --}}
+                                                        @if ($index < count($definedRoutes) - 1)
+                                                            <div
+                                                                class="absolute top-4 left-[50%] right-[-50%] h-0.5 {{ $lineColor }} -z-10 transition-colors duration-200">
+                                                            </div>
+                                                        @endif
+
                                                         {{-- Node Step Marker --}}
                                                         <div
                                                             class="flex items-center justify-center size-9 rounded-full border-2 transition-colors duration-200 shadow-sm bg-white dark:bg-zinc-800
-                            {{ $hasStep ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-zinc-300 text-zinc-400' }}">
-                                                            <span class="text-sm font-semibold">{{ $index + 1 }}</span>
+                        {{ $hasStep ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-zinc-300 text-zinc-400' }}">
+
+                                                            @if ($hasStep && $stepData->date_released)
+                                                                {{-- Check icon shows it completed this specific routing node --}}
+                                                                <flux:icon name="check" class="size-4 text-emerald-500" />
+                                                            @else
+                                                                <span
+                                                                    class="text-sm font-semibold">{{ $index + 1 }}</span>
+                                                            @endif
                                                         </div>
 
                                                         {{-- Department Label --}}
@@ -253,7 +283,6 @@
                                         </div>
                                     </flux:modal>
 
-                                    {{-- VIEW MODAL (Unique to this row) --}}
                                     <flux:modal :name="'view-ticket-' . $ticket->id" class="md:w-[600px]">
                                         <div class="space-y-6">
                                             <div class="flex items-center gap-3">

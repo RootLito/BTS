@@ -232,6 +232,8 @@
                     <flux:heading size="lg">Track Document</flux:heading>
                 </div>
 
+                <flux:input label="Document Number" name="document_no" required />
+
                 <div class="w-full flex flex-col gap-2" x-data="{
                     search: '',
                     selectedOffice: 'Select recipient...',
@@ -367,4 +369,3 @@
         </flux:modal>
     </div>
 @endsection
-    

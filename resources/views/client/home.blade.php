@@ -8,7 +8,7 @@
             <span class="font-semibold text-zinc-900">{{ now()->year }}</span>
         </flux:text>
 
-        <div class="flex-1 grid grid-cols-3 grid-rows-3 gap-10">
+        <div class="flex-1 grid grid-cols-3 grid-rows-3 gap-6">
             <flux:card class="flex flex-col gap-4">
                 <div class="flex items-center justify-between">
                     <flux:heading size="lg">Total Trips</flux:heading>

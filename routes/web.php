@@ -113,6 +113,11 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
 
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'clientRead'])->name('client.notification.read');
 
+    Route::get('/document-tracking', [TravelOrderController::class, 'index'])->name('client.document-tracking');
+    Route::get('/document-tracking/{tripTicket}', [TravelOrderController::class, 'showTracking'])->name('client.document-tracking.show');
+    Route::post('/document-tracking/{tripTicket}/track', [TravelOrderController::class, 'track'])->name('client.document-tracking.track');
+    Route::post('/client/document-tracking/{tripTicket}/receive', [TravelOrderController::class, 'receive'])->name('client.document-tracking.receive');
+
 
     Route::get('/trip-history', function () {
         return view('client.trip-history');

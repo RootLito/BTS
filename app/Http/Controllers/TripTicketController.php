@@ -17,44 +17,7 @@ class TripTicketController extends Controller
     {
         parent::__construct();
     }
-    // public function index()
-    // {
-    //     $drivers = Driver::with('latestTrip')
-    //         ->get()
-    //         ->sortBy(function ($driver) {
-    //             return match (strtolower($driver->status)) {
-    //                 'available' => 1,
-    //                 'on trip' => 2,
-    //                 default => 3,
-    //             };
-    //         });
-    //     $tickets = TripTicket::with(['driver', 'vehicle'])->latest()->get();
-    //     $vehicles = Vehicle::all();
-    //     $events = TripTicket::all()->map(function ($ticket) {
-    //         $startDate = Carbon::parse($ticket->start_date);
-    //         $endDate = Carbon::parse($ticket->end_date);
-    //         return [
-    //             'title' => $ticket->destination,
-    //             'start' => $startDate->format('Y-m-d'),
-    //             'end' => $endDate->copy()->addDay()->format('Y-m-d'),
-    //             'color' => $ticket->status === 'Approved' ? '#10b981' : '#facc15',
-    //             'extendedProps' => [
-    //                 'office' => $ticket->office,
-    //                 'purpose' => $ticket->purpose,
-    //                 'driver' => $ticket->driver->name ?? 'No Driver',
-    //                 'status' => $ticket->status,
-    //                 'display_start' => $startDate->format('M d, Y'),
-    //                 'display_end' => $endDate->format('M d, Y'),
-    //             ]
-    //         ];
-    //     });
-    //     return view('client.booking', compact(
-    //         'tickets',
-    //         'drivers',
-    //         'vehicles',
-    //         'events'
-    //     ));
-    // }
+    
     public function index()
     {
         $drivers = Driver::with('latestTrip')
@@ -130,51 +93,7 @@ class TripTicketController extends Controller
             'vehicles',
         ));
     }
-    // public function adminBook(Request $request)
-    // {
-    //     $query = TripTicket::with(['driver', 'vehicle']);
-    //     if ($request->filled('search')) {
-    //         $search = $request->search;
-    //         $query->where(function ($q) use ($search) {
-    //             $q->orWhere('destination', 'like', "%{$search}%");
-    //         });
-    //     }
-    //     if ($request->filled('start_date')) {
-    //         $query->whereDate('created_at', '>=', $request->start_date);
-    //     }
-    //     if ($request->filled('end_date')) {
-    //         $query->whereDate('created_at', '<=', $request->end_date);
-    //     }
-    //     $tickets = $query->latest()->paginate(9);
-    //     $tickets->appends($request->all());
-    //     $drivers = Driver::all();
-    //     $vehicles = Vehicle::all();
-    //     $events = TripTicket::all()->map(function ($ticket) {
-    //         $startDate = Carbon::parse($ticket->start_date);
-    //         $endDate = Carbon::parse($ticket->end_date);
 
-    //         return [
-    //             'title' => $ticket->destination,
-    //             'start' => $startDate->format('Y-m-d'),
-    //             'end' => $endDate->copy()->addDay()->format('Y-m-d'),
-    //             'color' => $ticket->status === 'Approved' ? '#10b981' : '#facc15',
-    //             'extendedProps' => [
-    //                 'office' => $ticket->office,
-    //                 'purpose' => $ticket->purpose,
-    //                 'driver' => $ticket->driver->name ?? 'No Driver',
-    //                 'status' => $ticket->status,
-    //                 'display_start' => $startDate->format('M d, Y'),
-    //                 'display_end' => $endDate->format('M d, Y'),
-    //             ]
-    //         ];
-    //     });
-    //     return view('admin.book', compact(
-    //         'tickets',
-    //         'drivers',
-    //         'vehicles',
-    //         'events'
-    //     ));
-    // }
     public function adminBook(Request $request)
     {
         $query = TripTicket::with(['driver', 'vehicle']);
@@ -235,12 +154,7 @@ class TripTicketController extends Controller
             'events'
         ));
     }
-    // public function showAdmin(TripTicket $tripTicket)
-    // {
-    //     $tripTicket->load(['driver', 'vehicle']);
-    //     $drivers = Driver::with('vehicle')->get();
-    //     return view('admin.booking-summary', compact('tripTicket', 'drivers'));
-    // }
+
     public function showAdmin(TripTicket $tripTicket)
     {
         $tripTicket->load(['driver', 'vehicle']);
@@ -270,7 +184,6 @@ class TripTicketController extends Controller
 
     public function tripTicket(Request $request)
     {
-        // Eager load using the exact relationship name from your TripTicket model
         $query = TripTicket::with(['driver', 'vehicle', 'documentTrackings'])
             ->where('client_id', auth()->id());
 
