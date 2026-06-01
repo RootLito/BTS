@@ -199,45 +199,24 @@ class TravelOrderController extends Controller
 
     public function showTracking(TripTicket $tripTicket)
     {
+        // Retrieve the associated Travel Order details
         $travelOrder = TravelOrder::where('trip_id', $tripTicket->id)->first();
-        // Inside showTracking method rewrite the history mapping loop:
-        $history = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
+
+        // Retrieve tracking logs
+        $trackings = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
             ->latest()
-            ->get()
-            ->map(function ($track) {
-                $duration = '00D 00:00';
+            ->get();
 
-                // If it was received, duration is calculated from release to receive milestone
-                if ($track->date_released && $track->date_received) {
-                    $diff = $track->date_released->diff($track->date_received);
-                    $duration = sprintf('%02dD %02d:%02d', $diff->days, $diff->h, $diff->i);
-                } elseif ($track->date_released && !$track->date_received) {
-                    // Document is currently in transit
-                    $duration = 'In Transit';
-                }
+        // Get document number from any existing log entry
+        $documentNo = $trackings->first()?->document_no ?? 'N/A';
 
-                return [
-                    'status' => $track->status,
-                    'user' => auth()->user()->name,
-                    'date_time' => $track->updated_at->format('M j Y g:iA'),
-                    'office' => $track->status === 'Received' ? $track->route_to : $track->route_from,
-                    'remarks' => $track->remarks ?? 'Not Applicable',
-                    'forwarded_to' => $track->route_to ?? 'Not Applicable',
-                    'duration' => $duration
-                ];
-            });
-        return response()->json([
-            'profile' => [
-                'id' => $tripTicket->id,
-                'document_no' => DocumentTracking::where('trip_ticket_id', $tripTicket->id)->first()?->document_no ?? 'N/A',
-                'date' => $tripTicket->created_at->format('M j, Y'),
-                'passengers' => is_array($tripTicket->passengers) ? implode(', ', $tripTicket->passengers) : $tripTicket->passengers,
-                'office' => $tripTicket->office,
-                'inclusive_dates' => $tripTicket->start_date->format('M j, Y') . ' - ' . $tripTicket->end_date->format('M j, Y'),
-                'purpose' => $tripTicket->purpose ?? 'N/A',
-                'destination' => $tripTicket->destination ?? 'N/A',
-            ],
-            'history' => $history
-        ]);
+        // Retrieve active list of offices for the dropdown menu selection
+        $offices = Client::whereNotNull('office')
+            ->where('office', '!=', '')
+            ->pluck('office')
+            ->unique()
+            ->values();
+
+        return view('client.document-action', compact('tripTicket', 'travelOrder', 'trackings', 'documentNo', 'offices'));
     }
 }

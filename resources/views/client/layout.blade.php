@@ -49,7 +49,7 @@
                 Travel Order
             </flux:navbar.item>
 
-            @if (\App\Models\DocumentTracking::where('route_to', auth()->user()->office)->where('status', 'Forwarded')->exists())
+            @if (\App\Models\DocumentTracking::where('route_to', auth()->user()->office))
                 <flux:navbar.item icon="document-magnifying-glass" href="{{ route('client.document-tracking') }}"
                     :current="request()->routeIs('client.document-tracking*')">
                     Document Tracking
@@ -125,7 +125,7 @@
             </flux:button>
         </form>
     </flux:header>
-    <flux:main container>
+    <flux:main container class="overflow-y-auto scrollbar-hidden">
         @yield('content')
     </flux:main>
     @fluxScripts
