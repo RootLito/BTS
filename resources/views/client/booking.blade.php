@@ -102,7 +102,7 @@
             <flux:card class="col-span-2 flex flex-col gap-6 overflow-hidden">
                 <flux:heading size="lg">Calendar</flux:heading>
                 <flux:callout variant="secondary" icon="information-circle"
-                    heading="Navigation is free. Selection is limited to the current and next month." />
+                    heading="Click and drag to select a date range" />
                 
                 <div class="flex-1">
                     <div x-ref="calendar" class="h-full"></div>

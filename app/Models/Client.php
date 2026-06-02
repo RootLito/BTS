@@ -27,4 +27,8 @@ class Client extends Authenticatable
     {
         return $this->hasMany(Note::class);
     }
+    public function documentTrackings(): HasMany
+    {
+        return $this->hasMany(DocumentTracking::class);
+    }
 }

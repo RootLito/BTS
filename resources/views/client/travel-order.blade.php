@@ -225,10 +225,7 @@
 
             <div class="w-full flex flex-col gap-2">
                 <flux:label>Forwarded to</flux:label>
-
-                {{-- Hidden input to store the selected office value for form submission --}}
                 <input type="hidden" name="route" id="forward_to_input" required>
-
                 <flux:dropdown class="w-full">
                     <flux:button id="office_dropdown_button" icon-trailing="chevron-down" class="w-full [&>svg]:ml-auto"
                         align="start">

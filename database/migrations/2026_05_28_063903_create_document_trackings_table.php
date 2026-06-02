@@ -15,10 +15,13 @@ return new class extends Migration {
             $table->foreignId('trip_ticket_id')
                 ->constrained('trip_tickets')
                 ->onDelete('cascade');
+            $table->foreignId('client_id')
+                ->constrained('clients')
+                ->onDelete('cascade');
             $table->string('document_no');
-            $table->string('route_from'); 
-            $table->string('route_to');   
-            $table->string('status');  
+            $table->string('route_from');
+            $table->string('route_to')->nullable();
+            $table->string('status');
             $table->dateTime('date_released')->nullable();
             $table->dateTime('date_received')->nullable();
             $table->text('remarks')->nullable();

@@ -11,6 +11,7 @@ class DocumentTracking extends Model
 
     protected $fillable = [
         'trip_ticket_id',
+        'client_id',
         'document_no',
         'route_from',     
         'route_to',
@@ -25,6 +26,10 @@ class DocumentTracking extends Model
         'date_received' => 'datetime',
     ];
 
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
 
     public function tripTicket(): BelongsTo
     {

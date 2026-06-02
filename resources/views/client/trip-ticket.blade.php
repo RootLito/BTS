@@ -6,7 +6,6 @@
         <flux:text class="mt-2 mb-6 text-base">View and manage your trip tickets</flux:text>
 
         <div class="flex-1 space-y-4">
-            {{-- Search and Filter Bar --}}
             <form action="{{ route('client.trip-ticket') }}" method="GET" class="flex items-center gap-2">
                 <div class="w-100">
                     <flux:input name="search" value="{{ request('search') }}" icon="magnifying-glass"
@@ -166,218 +165,6 @@
                                             </flux:modal.trigger>
                                         </flux:menu>
                                     </flux:dropdown>
-
-                                    <flux:modal :name="'track-ticket-' . $ticket->id" class="md:w-[700px]">
-                                        <div class="space-y-6">
-                                            <div class="flex items-center gap-3">
-                                                <flux:icon name="document-check" class="size-6 text-emerald-500" />
-
-                                                <div>
-                                                    <flux:heading size="lg">Document Tracking</flux:heading>
-                                                    <flux:text size="sm" class="text-zinc-500">Real-time processing
-                                                        updates for your trip routing request.</flux:text>
-                                                </div>
-                                            </div>
-
-                                            @php
-                                                $definedRoutes = ['PMEU', 'BUDGET', 'ORD/OIC', 'ADMIN'];
-                                            @endphp
-
-                                            {{-- Horizontal Timeline Wrapper --}}
-                                            <div class="relative flex items-start justify-between mt-8 z-0">
-                                                @foreach ($definedRoutes as $index => $routeName)
-                                                    @php
-                                                        $stepData = $ticket->documentTrackings->firstWhere(
-                                                            'route',
-                                                            $routeName,
-                                                        );
-                                                        $hasStep = !is_null($stepData);
-
-                                                        // Determine if the next step exists in the log to shade the connecting line
-                                                        $nextRouteName = $definedRoutes[$index + 1] ?? null;
-                                                        $nextStepExists = $nextRouteName
-                                                            ? $ticket->documentTrackings->contains(
-                                                                'route',
-                                                                $nextRouteName,
-                                                            )
-                                                            : false;
-
-                                                        // Connecting line color indicator
-                                                        $lineColor =
-                                                            $hasStep && ($stepData->date_released || $nextStepExists)
-                                                                ? 'bg-emerald-500 dark:bg-emerald-500'
-                                                                : 'bg-zinc-200 dark:bg-zinc-700';
-                                                    @endphp
-
-                                                    <div class="flex flex-col items-center flex-1 text-center relative">
-
-                                                        {{-- Connecting Line Segments --}}
-                                                        @if ($index < count($definedRoutes) - 1)
-                                                            <div
-                                                                class="absolute top-4 left-[50%] right-[-50%] h-0.5 {{ $lineColor }} -z-10 transition-colors duration-200">
-                                                            </div>
-                                                        @endif
-
-                                                        {{-- Node Step Marker --}}
-                                                        <div
-                                                            class="flex items-center justify-center size-9 rounded-full border-2 transition-colors duration-200 shadow-sm bg-white dark:bg-zinc-800
-                        {{ $hasStep ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold' : 'border-zinc-300 text-zinc-400' }}">
-
-                                                            @if ($hasStep && $stepData->date_released)
-                                                                {{-- Check icon shows it completed this specific routing node --}}
-                                                                <flux:icon name="check" class="size-4 text-emerald-500" />
-                                                            @else
-                                                                <span
-                                                                    class="text-sm font-semibold">{{ $index + 1 }}</span>
-                                                            @endif
-                                                        </div>
-
-                                                        {{-- Department Label --}}
-                                                        <span
-                                                            class="mt-2 text-xs font-bold tracking-wide uppercase {{ $hasStep ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400' }}">
-                                                            {{ $routeName }}
-                                                        </span>
-
-                                                        {{-- Timestamps Metadata --}}
-                                                        <div
-                                                            class="mt-3 space-y-1 text-[11px] px-1 w-full text-zinc-600 dark:text-zinc-400">
-                                                            {{-- Received Entry --}}
-                                                            <div
-                                                                class="flex flex-col items-center bg-zinc-50 dark:bg-zinc-900/50 p-1.5 rounded border border-zinc-100 dark:border-zinc-800/60">
-                                                                <span
-                                                                    class="text-[9px] text-zinc-400 font-medium uppercase tracking-tight">Received</span>
-                                                                @if ($hasStep && $stepData->date_received)
-                                                                    <span
-                                                                        class="font-medium text-zinc-800 dark:text-zinc-200 mt-0.5">
-                                                                        {{ \Carbon\Carbon::parse($stepData->date_received)->format('M d, h:i A') }}
-                                                                    </span>
-                                                                @else
-                                                                    <span class="text-zinc-400 italic mt-0.5">--:--</span>
-                                                                @endif
-                                                            </div>
-
-                                                            {{-- Released Entry --}}
-                                                            <div
-                                                                class="flex flex-col items-center bg-zinc-50 dark:bg-zinc-900/50 p-1.5 rounded border border-zinc-100 dark:border-zinc-800/60">
-                                                                <span
-                                                                    class="text-[9px] text-zinc-400 font-medium uppercase tracking-tight">Released</span>
-                                                                @if ($hasStep && $stepData->date_released)
-                                                                    <span
-                                                                        class="font-medium text-zinc-800 dark:text-zinc-200 mt-0.5">
-                                                                        {{ \Carbon\Carbon::parse($stepData->date_released)->format('M d, h:i A') }}
-                                                                    </span>
-                                                                @else
-                                                                    <span class="text-zinc-400 italic mt-0.5">--:--</span>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-
-                                            <div class="flex justify-end pt-4">
-                                                <flux:modal.close>
-                                                    <flux:button variant="filled">Close Tracking</flux:button>
-                                                </flux:modal.close>
-                                            </div>
-                                        </div>
-                                    </flux:modal>
-
-                                    <flux:modal :name="'view-ticket-' . $ticket->id" class="md:w-[600px]">
-                                        <div class="space-y-6">
-                                            <div class="flex items-center gap-3">
-                                                <flux:icon name="information-circle" class="size-6 text-emerald-500" />
-                                                <flux:heading size="lg">Trip Details</flux:heading>
-                                            </div>
-
-                                            <div class="grid grid-cols-2 gap-6">
-                                                <flux:field>
-                                                    <flux:label>Destination</flux:label>
-                                                    <flux:text class="font-medium text-zinc-800 dark:text-white">
-                                                        {{ $ticket->destination }}</flux:text>
-                                                </flux:field>
-
-                                                <flux:field>
-                                                    <flux:label>Status</flux:label>
-                                                    <div>
-                                                        <flux:badge color="emerald" inset="top bottom">
-                                                            {{ $ticket->status }}</flux:badge>
-                                                    </div>
-                                                </flux:field>
-
-                                                <flux:field class="col-span-2">
-                                                    <flux:label>Purpose</flux:label>
-                                                    <flux:text>{{ $ticket->purpose ?? 'No purpose provided' }}</flux:text>
-                                                </flux:field>
-
-                                                <flux:field class="col-span-2">
-                                                    <flux:label>Passenger(s)</flux:label>
-                                                    <div class="mt-2 flex flex-wrap gap-2">
-                                                        @php
-                                                            $passengers = is_array($ticket->passengers)
-                                                                ? $ticket->passengers
-                                                                : json_decode($ticket->passengers ?? '[]', true);
-                                                        @endphp
-
-                                                        @forelse($passengers as $passenger)
-                                                            <flux:badge variant="outline" size="sm" icon="user">
-                                                                {{ $passenger }}</flux:badge>
-                                                        @empty
-                                                            <flux:text size="sm" class="italic text-zinc-400">Driver
-                                                                only</flux:text>
-                                                        @endforelse
-                                                    </div>
-                                                </flux:field>
-
-                                                <flux:field>
-                                                    <flux:label>Departure</flux:label>
-                                                    <flux:text>
-                                                        {{ \Carbon\Carbon::parse($ticket->start_date)->format('M d, Y') }}
-                                                    </flux:text>
-                                                </flux:field>
-
-                                                <flux:field>
-                                                    <flux:label>Return</flux:label>
-                                                    <flux:text>
-                                                        {{ \Carbon\Carbon::parse($ticket->end_date)->format('M d, Y') }}
-                                                    </flux:text>
-                                                </flux:field>
-                                            </div>
-
-                                            <div class="flex justify-end">
-                                                <flux:modal.close>
-                                                    <flux:button variant="filled">Close</flux:button>
-                                                </flux:modal.close>
-                                            </div>
-                                        </div>
-                                    </flux:modal>
-
-                                    {{-- DELETE MODAL --}}
-                                    <flux:modal :name="'delete-ticket-' . $ticket->id" class="min-w-[400px]">
-                                        <form action="{{ route('client.booking.destroy', $ticket->id) }}" method="POST"
-                                            class="space-y-6">
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <div class="space-y-2">
-                                                <flux:heading size="lg">Delete Trip Ticket?</flux:heading>
-                                                <flux:text>
-                                                    Are you sure you want to delete the trip to
-                                                    <strong>{{ $ticket->destination }}</strong>?
-                                                </flux:text>
-                                            </div>
-
-                                            <div class="flex gap-2">
-                                                <flux:spacer />
-                                                <flux:modal.close>
-                                                    <flux:button variant="ghost">Cancel</flux:button>
-                                                </flux:modal.close>
-                                                <flux:button type="submit" variant="primary" color="red">
-                                                    Confirm Delete
-                                                </flux:button>
-                                            </div>
-                                        </form>
-                                    </flux:modal>
                                 </flux:table.cell>
                             </flux:table.row>
                         @empty
@@ -402,8 +189,182 @@
         </div>
     </div>
 
-    {{-- MODALS --}}
 
+    {{-- LOOP-DEPENDENT MODALS --}}
+    @foreach ($tickets as $ticket)
+        <flux:modal :name="'track-ticket-' . $ticket->id" class="max-w-none!">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Document Tracking</flux:heading>
+                    <flux:text size="sm" class="text-zinc-500 dark:text-zinc-400">Routing history and office processing
+                        logs for your travel order
+                        document.</flux:text>
+                </div>
+
+                @if (count($ticket->stepper_steps) > 0)
+                    <div class="relative flex items-start justify-between mt-8 z-0 pb-4">
+                        @foreach ($ticket->stepper_steps as $step)
+                            <div class="flex flex-col items-center flex-1 min-w-[150px] max-w-xl text-center relative px-2">
+
+                                @if ($step['has_next_line'])
+                                    <div
+                                        class="absolute top-[18px] left-[50%] right-[-50%] h-[3px] {{ $step['is_released'] ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-zinc-200 dark:bg-zinc-700' }} -z-10 transition-colors duration-200">
+                                    </div>
+                                @endif
+
+                                <div
+                                    class="flex items-center justify-center size-9 rounded-full border transition-colors duration-200 shadow-none
+                                {{ $step['is_released']
+                                    ? 'bg-emerald-500 border-emerald-500 text-white font-bold'
+                                    : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-300 text-zinc-400 dark:border-zinc-600 dark:text-zinc-500' }}">
+                                    @if ($step['is_released'])
+                                        <flux:icon name="check" class="size-6 text-white" variant="micro" />
+                                    @else
+                                        <span class="text-xs font-semibold">{{ $loop->iteration }}</span>
+                                    @endif
+                                </div>
+
+                                <span
+                                    class="mt-3 text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                                    {{ $step['name'] }}
+                                </span>
+
+                                <div
+                                    class="mt-3 w-full bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800/80 rounded-lg p-2 text-left space-y-1.5">
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 tracking-wider">RECEIVED</span>
+                                        <span
+                                            class="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 {{ $step['received_at'] === 'Not Applicable' ? 'italic text-zinc-400 dark:text-zinc-500' : '' }}">
+                                            {{ $step['received_at'] }}
+                                        </span>
+                                    </div>
+
+                                    <div class="h-[1px] bg-zinc-200/60 dark:bg-zinc-800/80 w-full">
+                                    </div>
+
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 tracking-wider">RELEASED</span>
+                                        <span
+                                            class="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 {{ $step['released_at'] === 'Not Applicable' ? 'italic text-zinc-400 dark:text-zinc-500' : '' }}">
+                                            {{ $step['released_at'] }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div
+                        class="flex flex-col items-center justify-center py-12 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/20">
+                        <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">No
+                            History Logged</span>
+                        <span class="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs mt-1">This
+                            document hasn't completed any tracking movements yet.</span>
+                    </div>
+                @endif
+            </div>
+        </flux:modal>
+
+        <flux:modal :name="'view-ticket-' . $ticket->id" class="md:w-[600px]">
+            <div class="space-y-6">
+                <div class="flex items-center gap-3">
+                    <flux:icon name="information-circle" class="size-6 text-emerald-500" />
+                    <flux:heading size="lg">Trip Details</flux:heading>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <flux:field>
+                        <flux:label>Destination</flux:label>
+                        <flux:text class="font-medium text-zinc-800 dark:text-white">
+                            {{ $ticket->destination }}</flux:text>
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Status</flux:label>
+                        <div>
+                            <flux:badge color="emerald" inset="top bottom">
+                                {{ $ticket->status }}</flux:badge>
+                        </div>
+                    </flux:field>
+
+                    <flux:field class="col-span-2">
+                        <flux:label>Purpose</flux:label>
+                        <flux:text>{{ $ticket->purpose ?? 'No purpose provided' }}</flux:text>
+                    </flux:field>
+
+                    <flux:field class="col-span-2">
+                        <flux:label>Passenger(s)</flux:label>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @php
+                                $passengers = is_array($ticket->passengers)
+                                    ? $ticket->passengers
+                                    : json_decode($ticket->passengers ?? '[]', true);
+                            @endphp
+
+                            @forelse($passengers as $passenger)
+                                <flux:badge variant="outline" size="sm" icon="user">
+                                    {{ $passenger }}</flux:badge>
+                            @empty
+                                <flux:text size="sm" class="italic text-zinc-400">Driver
+                                    only</flux:text>
+                            @endforelse
+                        </div>
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Departure</flux:label>
+                        <flux:text>
+                            {{ \Carbon\Carbon::parse($ticket->start_date)->format('M d, Y') }}
+                        </flux:text>
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>Return</flux:label>
+                        <flux:text>
+                            {{ \Carbon\Carbon::parse($ticket->end_date)->format('M d, Y') }}
+                        </flux:text>
+                    </flux:field>
+                </div>
+
+                <div class="flex justify-end">
+                    <flux:modal.close>
+                        <flux:button variant="filled">Close</flux:button>
+                    </flux:modal.close>
+                </div>
+            </div>
+        </flux:modal>
+
+        {{-- DELETE MODAL --}}
+        <flux:modal :name="'delete-ticket-' . $ticket->id" class="min-w-[400px]">
+            <form action="{{ route('client.booking.destroy', $ticket->id) }}" method="POST" class="space-y-6">
+                @csrf
+                @method('DELETE')
+
+                <div class="space-y-2">
+                    <flux:heading size="lg">Delete Trip Ticket?</flux:heading>
+                    <flux:text>
+                        Are you sure you want to delete the trip to
+                        <strong>{{ $ticket->destination }}</strong>?
+                    </flux:text>
+                </div>
+
+                <div class="flex gap-2">
+                    <flux:spacer />
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="primary" color="red">
+                        Confirm Delete
+                    </flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endforeach
+
+    {{-- TRIP TICKET --}}
     <flux:modal name="view-ticket" class="md:w-[600px]">
         <div x-data="{ ticket: {} }"
             x-on:open-modal.window="if($event.detail.name === 'view-ticket') ticket = $event.detail.ticket">

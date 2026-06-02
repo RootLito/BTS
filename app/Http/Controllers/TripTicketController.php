@@ -17,7 +17,7 @@ class TripTicketController extends Controller
     {
         parent::__construct();
     }
-    
+
     public function index()
     {
         $drivers = Driver::with('latestTrip')
@@ -184,7 +184,7 @@ class TripTicketController extends Controller
 
     public function tripTicket(Request $request)
     {
-        $query = TripTicket::with(['driver', 'vehicle', 'documentTrackings'])
+        $query = TripTicket::with(['driver', 'vehicle', 'documentTrackings.client'])
             ->where('client_id', auth()->id());
 
         $query->when($request->search, function ($q, $search) {
@@ -200,13 +200,57 @@ class TripTicketController extends Controller
         } else {
             $query->latest();
         }
-
         $tickets = $query->paginate(8)->withQueryString();
+        $tickets->through(function ($ticket) {
+            $sorted = $ticket->documentTrackings->sortBy('id')->values();
+            $milestones = collect();
+            foreach ($sorted as $track) {
+                $officeName = $track->client?->office;
+                if ($officeName) {
+                    $milestones->push($officeName);
+                }
+            }
+            $uniqueRoutes = $milestones->unique()->values();
+            $ticket->stepper_steps = $uniqueRoutes->map(function ($routeName, $index) use ($sorted, $uniqueRoutes) {
+                $receivedLog = $sorted->first(function ($track) use ($routeName) {
+                    return $track->client?->office === $routeName && $track->status === 'Received';
+                });
+
+                $releasedLog = $sorted->first(function ($track) use ($routeName) {
+                    return $track->client?->office === $routeName && $track->status === 'Released';
+                });
+
+                $dateFormat = 'M j Y g:iA';
+                $isFirstNode = ($index === 0);
+
+                if ($isFirstNode && !$receivedLog) {
+                    $receivedText = 'Not Applicable';
+                } else {
+                    $receivedText = $receivedLog?->date_received ? $receivedLog->date_received->format($dateFormat) : '--:--';
+                }
+
+                if ($routeName === 'BUDGET') {
+                    $releasedText = 'Not Applicable';
+                    $isReleased = !is_null($receivedLog);
+                } else {
+                    $releasedText = $releasedLog?->date_released ? $releasedLog->date_released->format($dateFormat) : '--:--';
+                    $isReleased = !is_null($releasedLog);
+                }
+
+                return [
+                    'name' => $routeName,
+                    'is_released' => $isReleased,
+                    'received_at' => $receivedText,
+                    'released_at' => $releasedText,
+                    'has_next_line' => $index < (count($uniqueRoutes) - 1)
+                ];
+            });
+
+            return $ticket;
+        });
 
         return view('client.trip-ticket', compact('tickets'));
     }
-
-
 
 
     public function store(Request $request)

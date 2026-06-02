@@ -6,8 +6,7 @@
             <flux:card class="space-y-4">
                 <div>
                     <flux:heading size="lg" level="2">Travel Order</flux:heading>
-                    <flux:text size="sm">Core overview profiles regarding this authorization log.
-                    </flux:text>
+                    <flux:text size="sm">Core overview profiles regarding this authorization log.</flux:text>
                 </div>
                 <div class="flex flex-col gap-4 mt-6">
                     <div class="flex items-baseline">
@@ -72,12 +71,35 @@
                 </div>
 
                 <div class="flex flex-wrap gap-3 pt-2">
-                    {{-- Hide the receive form completely if the document was created by the logged-in user --}}
                     @if ($tripTicket->client_id !== auth()->id())
+                        @php
+                            $userOffice = is_object(auth()->user()->office)
+                                ? auth()->user()->office->name
+                                : auth()->user()->office;
+                            $latestLog = $trackings->first();
+                            $isSenderPending =
+                                $latestLog &&
+                                $latestLog->status === 'Released' &&
+                                $latestLog->route_from === $userOffice;
+                            $isAlreadyReceivedByUs =
+                                $latestLog &&
+                                $latestLog->status === 'Received' &&
+                                $latestLog->client_id == auth()->id();
+
+                            $cannotReceive = $isSenderPending || $isAlreadyReceivedByUs;
+                        @endphp
+
                         <form action="{{ route('client.document-tracking.receive', $tripTicket->id) }}" method="POST">
                             @csrf
-                            <flux:button type="submit" variant="filled" color="emerald" icon="check-circle">
-                                Receive Document
+                            <flux:button type="submit" variant="filled" color="emerald" icon="check-circle"
+                                :disabled="$cannotReceive">
+                                @if ($isSenderPending)
+                                    Document Forwarded
+                                @elseif($isAlreadyReceivedByUs)
+                                    Document Received
+                                @else
+                                    Receive Document
+                                @endif
                             </flux:button>
                         </form>
                     @endif
@@ -116,59 +138,101 @@
                 </div>
 
                 <hr class="border-zinc-200 dark:border-zinc-800/60 my-2" />
+
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>Action</flux:table.column>
+                        <flux:table.column>From</flux:table.column>
+                        <flux:table.column>Forwarded</flux:table.column>
                         <flux:table.column>Office</flux:table.column>
                         <flux:table.column>Date and Time</flux:table.column>
                         <flux:table.column>Remarks</flux:table.column>
-                        <flux:table.column>Forwarded</flux:table.column>
                         <flux:table.column>Duration</flux:table.column>
+                        {{-- <flux:table.column /> --}}
                     </flux:table.columns>
 
                     <flux:table.rows>
                         @forelse($trackings as $track)
-                            @php
-                                $duration = '00D 00:00';
-                                if ($track->date_released && $track->date_received) {
-                                    $diff = $track->date_released->diff($track->date_received);
-                                    $duration = sprintf('%02dD %02d:%02d', $diff->days, $diff->h, $diff->i);
-                                } elseif ($track->date_released && !$track->date_received) {
-                                    $duration = 'In Transit';
-                                }
-                            @endphp
                             <flux:table.row>
                                 <flux:table.cell>
                                     <span
-                                        class="px-2 py-1 rounded text-xs font-semibold {{ $track->status === 'Received' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' }}">
+                                        class="px-2 py-1 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
                                         {{ $track->status }}
                                     </span>
                                 </flux:table.cell>
-                                <flux:table.cell class="font-medium text-zinc-800 dark:text-zinc-200">
-                                    {{ $track->status === 'Received' ? $track->route_to : $track->route_from }}
+
+                                <flux:table.cell class="text-zinc-700 dark:text-zinc-300 text-xs font-medium">
+                                    {{ $track->route_from ?? 'Not Applicable' }}
                                 </flux:table.cell>
+                                <flux:table.cell class="text-zinc-700 dark:text-zinc-300 text-xs font-medium">
+                                    {{ $track->route_to ?? 'Not Applicable' }}
+                                </flux:table.cell>
+
+                                <flux:table.cell class="text-zinc-700 dark:text-zinc-300 text-xs font-medium">
+                                    {{ $track->client?->office ?? 'N/A' }}
+                                </flux:table.cell>
+
                                 <flux:table.cell class="whitespace-nowrap text-xs text-zinc-600 dark:text-zinc-400">
-                                    {{ $track->updated_at->format('M j, Y g:i A') }}
+                                    {{ $track->formatted_date }}
                                 </flux:table.cell>
+
                                 <flux:table.cell class="max-w-[180px] truncate italic text-zinc-500">
-                                    {{ $track->remarks ?? 'Not Applicable' }}
+                                    {{ $track->remarks }}
                                 </flux:table.cell>
-                                <flux:table.cell class="text-zinc-700 dark:text-zinc-300">
-                                    {{ $track->route_to ?? 'End of Route' }}
-                                </flux:table.cell>
+
                                 <flux:table.cell class="whitespace-nowrap font-mono text-xs">
-                                    {{ $duration }}
+                                    {{ $track->calculated_duration }}
                                 </flux:table.cell>
+
+                                {{-- <flux:table.cell class="text-right">
+                                    @if ($track->route_from === auth()->user()->office && is_null($track->date_received) && $track->status !== 'Received')
+                                        <flux:modal.trigger name="delete-tracking-{{ $track->id }}">
+                                            <flux:button variant="danger" size="xs" color="danger" icon="trash"
+                                                square />
+                                        </flux:modal.trigger>
+                                    @endif
+                                </flux:table.cell> --}}
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="6" class="py-8 text-center text-zinc-400">
+                                <flux:table.cell colspan="7" class="py-8 text-center text-zinc-400">
                                     No history records logged for this document yet.
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforelse
                     </flux:table.rows>
                 </flux:table>
+
+                @foreach ($trackings as $track)
+                    <flux:modal name="delete-tracking-{{ $track->id }}" class="min-w-[22rem]">
+                        <form action="{{ route('client.document-tracking.destroy', $track->id) }}" method="POST"
+                            class="m-0">
+                            @csrf
+                            @method('DELETE')
+
+                            <div class="space-y-6">
+                                <div>
+                                    <flux:heading size="lg">Delete Document Route?</flux:heading>
+
+                                    <flux:text class="mt-2">
+                                        You're about to delete this document route.<br>
+                                        This action cannot be reversed.
+                                    </flux:text>
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <flux:spacer />
+
+                                    <flux:modal.close>
+                                        <flux:button variant="ghost">Cancel</flux:button>
+                                    </flux:modal.close>
+
+                                    <flux:button type="submit" variant="danger">Delete</flux:button>
+                                </div>
+                            </div>
+                        </form>
+                    </flux:modal>
+                @endforeach
             </flux:card>
         </div>
     </div>

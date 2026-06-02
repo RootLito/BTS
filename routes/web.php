@@ -116,7 +116,8 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::get('/document-tracking', [TravelOrderController::class, 'index'])->name('client.document-tracking');
     Route::get('/document-tracking/{tripTicket}', [TravelOrderController::class, 'showTracking'])->name('client.document-tracking.show');
     Route::post('/document-tracking/{tripTicket}/track', [TravelOrderController::class, 'track'])->name('client.document-tracking.track');
-    Route::post('/client/document-tracking/{tripTicket}/receive', [TravelOrderController::class, 'receive'])->name('client.document-tracking.receive');
+    Route::post('/document-tracking/{tripTicket}/receive', [TravelOrderController::class, 'receive'])->name('client.document-tracking.receive');
+    Route::delete('/document-tracking/{id}', [TravelOrderController::class, 'destroy'])->name('client.document-tracking.destroy');
 
 
     Route::get('/trip-history', function () {
