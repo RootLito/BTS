@@ -7,8 +7,94 @@
                 <flux:heading size="xl" level="1">Admin Dashboard</flux:heading>
                 <flux:text class="mt-2">Overview of trip schedules, vehicle availability, and driver readiness</flux:text>
             </div>
-            <flux:button icon="printer" variant="outline" size="sm">Export Report</flux:button>
+            <flux:modal.trigger name="export-report-modal">
+                <flux:button icon="printer" variant="outline" size="sm">Export Report</flux:button>
+            </flux:modal.trigger>
         </div>
+        <flux:modal name="export-report-modal" class="md:max-w-lg">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Export Trip Tickets Report</flux:heading>
+                    <flux:subheading>Filter your trip ticket logs before downloading the spreadsheet.</flux:subheading>
+                </div>
+
+                <form id="filterForm" action="{{ route('admin.booking.export') }}" method="GET" class="space-y-4">
+
+                    <input type="hidden" name="office" id="selected_office_input" value="">
+                    <input type="hidden" name="period" id="selected_period_input" value="">
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-700">Filter by Office</label>
+                        <flux:dropdown>
+                            <flux:button id="office_btn" icon-trailing="chevron-down" class="w-full justify-between">
+                                All Offices
+                            </flux:button>
+
+                            <flux:menu class="w-full">
+                                <flux:menu.radio.group>
+                                    <flux:menu.radio
+                                        onclick="document.getElementById('selected_office_input').value = ''; document.getElementById('office_btn').innerText = 'All Offices'"
+                                        checked>
+                                        All Offices
+                                    </flux:menu.radio>
+                                    @foreach (\App\Models\Client::distinct()->pluck('office') as $officeName)
+                                        <flux:menu.radio
+                                            onclick="document.getElementById('selected_office_input').value = '{{ $officeName }}'; document.getElementById('office_btn').innerText = '{{ $officeName }}'">
+                                            {{ $officeName }}
+                                        </flux:menu.radio>
+                                    @endforeach
+                                </flux:menu.radio.group>
+                            </flux:menu>
+                        </flux:dropdown>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-gray-700">Time Frame Filter</label>
+                        <flux:dropdown>
+                            <flux:button id="period_btn" icon-trailing="chevron-down" class="w-full justify-between">
+                                No Preset Period
+                            </flux:button>
+
+                            <flux:menu class="w-full">
+                                <flux:menu.radio.group>
+                                    <flux:menu.radio
+                                        onclick="document.getElementById('selected_period_input').value = ''; document.getElementById('period_btn').innerText = 'No Preset Period'"
+                                        checked>
+                                        No Preset Period
+                                    </flux:menu.radio>
+                                    <flux:menu.radio
+                                        onclick="document.getElementById('selected_period_input').value = 'day'; document.getElementById('period_btn').innerText = 'Today'">
+                                        Today</flux:menu.radio>
+                                    <flux:menu.radio
+                                        onclick="document.getElementById('selected_period_input').value = 'week'; document.getElementById('period_btn').innerText = 'This Week'">
+                                        This Week</flux:menu.radio>
+                                    <flux:menu.radio
+                                        onclick="document.getElementById('selected_period_input').value = 'month'; document.getElementById('period_btn').innerText = 'This Month'">
+                                        This Month</flux:menu.radio>
+                                    <flux:menu.radio
+                                        onclick="document.getElementById('selected_period_input').value = 'year'; document.getElementById('period_btn').innerText = 'This Year'">
+                                        This Year</flux:menu.radio>
+                                </flux:menu.radio.group>
+                            </flux:menu>
+                        </flux:dropdown>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:input type="date" name="custom_start_date" label="Start Date" />
+                        <flux:input type="date" name="custom_end_date" label="End Date" />
+                    </div>
+
+                    <div class="flex justify-end space-x-2 pt-4">
+                        <flux:modal.close>
+                            <flux:button variant="ghost">Cancel</flux:button>
+                        </flux:modal.close>
+                        <flux:button type="submit" variant="primary" color="emerald" icon="document-text">
+                            Export Excel
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
+        </flux:modal>
 
         <div class="flex-1 grid grid-cols-3 grid-rows-4 gap-6 min-h-0">
 
@@ -156,7 +242,8 @@
 
                     <div class="flex justify-between items-center mb-4">
                         <flux:heading size="lg">Trip Schedules</flux:heading>
-                        <flux:badge variant="solid" color="emerald">{{ $activeTripsCount }} Active This Month</flux:badge>
+                        <flux:badge variant="solid" color="emerald">{{ $activeTripsCount }} Active This Month
+                        </flux:badge>
                     </div>
 
                     <div class="flex-1 min-h-0">

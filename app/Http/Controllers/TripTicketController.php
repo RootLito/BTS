@@ -9,6 +9,8 @@ use App\Models\Note;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Exports\TripTicketsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class TripTicketController extends Controller
@@ -409,5 +411,20 @@ class TripTicketController extends Controller
         ]);
         $tripTicket->update($validated);
         return redirect()->back()->with('success', 'Details added successfully!');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $filters = [
+            'office' => $request->get('office'),
+            'period' => $request->get('period'),
+            'custom_start_date' => $request->get('custom_start_date'),
+            'custom_end_date' => $request->get('custom_end_date'),
+        ];
+
+        return Excel::download(
+            new TripTicketsExport($filters),
+            'BFAR_Trip_Report_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
     }
 }
