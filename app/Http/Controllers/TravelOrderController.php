@@ -7,6 +7,8 @@ use App\Models\TripTicket;
 use App\Models\TravelOrder;
 use App\Models\Client;
 use App\Models\DocumentTracking;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class TravelOrderController extends Controller
 {
@@ -86,36 +88,6 @@ class TravelOrderController extends Controller
 
 
 
-
-    // public function receive(TripTicket $tripTicket)
-    // {
-    //     $userOffice = is_object(auth()->user()->office) ? auth()->user()->office->name : auth()->user()->office;
-    //     $lastTracking = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
-    //         ->latest()
-    //         ->first();
-
-    //     if ($lastTracking && $lastTracking->route_from === $userOffice && $lastTracking->status !== 'Received') {
-    //         return redirect()->back()->with('error', 'You cannot receive this document because your office released it.');
-    //     }
-    //     if ($lastTracking && $lastTracking->route_to === $userOffice && $lastTracking->status === 'Received') {
-    //         return redirect()->back()->with('error', 'Document has already been received by your office.');
-    //     }
-
-    //     $comingFrom = $lastTracking ? $lastTracking->route_from : 'Origin';
-
-    //     DocumentTracking::create([
-    //         'trip_ticket_id' => $tripTicket->id,
-    //         'client_id' => auth()->id(), 
-    //         'document_no' => $tripTicket->document_no ?? $lastTracking->document_no ?? '',
-    //         'route_from' => $comingFrom,
-    //         'route_to' => 'Not Applicable',
-    //         'status' => 'Received',
-    //         'date_released' => null,
-    //         'date_received' => now(),
-    //     ]);
-
-    //     return redirect()->back()->with('success', 'Document logged at ' . $userOffice);
-    // }
     public function receive(TripTicket $tripTicket)
     {
         $userOffice = is_object(auth()->user()->office) ? auth()->user()->office->name : auth()->user()->office;
@@ -176,6 +148,32 @@ class TravelOrderController extends Controller
         return redirect()->back()->with('success', 'Document successfully released and forwarded to ' . $validated['route'] . '!');
     }
 
+    // public function index()
+    // {
+    //     $userOffice = auth()->user()->office;
+    //     $userId = auth()->id();
+
+    //     $documents = DocumentTracking::with(['tripTicket.notes'])
+    //         ->where(function ($query) use ($userOffice, $userId) {
+    //             $query->where('route_to', $userOffice)
+    //                 ->orWhere('route_from', $userOffice)
+    //                 ->orWhereHas('tripTicket', function ($q) use ($userId) {
+    //                     $q->where('client_id', $userId);
+    //                 });
+    //         })
+    //         ->latest()
+    //         ->get()
+    //         ->unique('trip_ticket_id')
+    //         ->values();
+
+    //     $offices = Client::whereNotNull('office')
+    //         ->where('office', '!=', '')
+    //         ->pluck('office')
+    //         ->unique()
+    //         ->values();
+
+    //     return view('client.document-tracking', compact('documents', 'offices'));
+    // }
     public function index()
     {
         $userOffice = auth()->user()->office;
@@ -194,6 +192,19 @@ class TravelOrderController extends Controller
             ->unique('trip_ticket_id')
             ->values();
 
+        $receivedTicketIds = DocumentTracking::where('status', 'Received')
+            ->where(function ($q) use ($userOffice) {
+                $q->where('route_from', $userOffice)
+                    ->orWhere('route_to', $userOffice); 
+            })
+            ->pluck('trip_ticket_id')
+            ->toArray();
+
+        $documents->transform(function ($doc) use ($receivedTicketIds, $userOffice) {
+            $doc->is_new = ($doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->trip_ticket_id, $receivedTicketIds));
+            return $doc;
+        });
+
         $offices = Client::whereNotNull('office')
             ->where('office', '!=', '')
             ->pluck('office')
@@ -207,12 +218,17 @@ class TravelOrderController extends Controller
     {
         $travelOrder = TravelOrder::where('trip_id', $tripTicket->id)->first();
 
+        $documentNo = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
+            ->whereNotNull('document_no')
+            ->where('document_no', '!=', '')
+            ->latest('id')
+            ->value('document_no') ?? 'N/A';
+
         $trackings = DocumentTracking::with('client')
             ->where('trip_ticket_id', $tripTicket->id)
+            ->where('document_no', $documentNo)
             ->orderBy('id', 'asc')
             ->get();
-
-        $documentNo = $trackings->last()?->document_no ?? 'N/A';
 
         $offices = Client::whereNotNull('office')
             ->where('office', '!=', '')
@@ -224,7 +240,6 @@ class TravelOrderController extends Controller
 
         $trackings = $trackings->map(function ($track, $index) use ($trackings, $dateFormat) {
             $duration = '';
-
             $currentDate = $track->status === 'Received' ? $track->date_received : $track->date_released;
 
             if ($track->status === 'Received') {
@@ -260,5 +275,70 @@ class TravelOrderController extends Controller
 
         return redirect()->route('client.document-tracking.show', $tripTicketId)
             ->with('status', 'Tracking record successfully removed.');
+    }
+
+
+
+    // GENERATE TO 
+    public function generateTo(TripTicket $tripTicket)
+    {
+        $userOffice = is_object(auth()->user()->office) ? auth()->user()->office->name : auth()->user()->office;
+        $currentClientId = auth()->id();
+        $lastGlobalTracking = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
+            ->latest()
+            ->first();
+        $comingFrom = $lastGlobalTracking ? $lastGlobalTracking->route_from : 'Origin';
+
+        try {
+            DB::transaction(function () use ($tripTicket, $currentClientId, $lastGlobalTracking, $comingFrom) {
+                if (empty($tripTicket->to_no)) {
+                    $periodKey = Carbon::now()->format('Yn');
+
+                    $counter = DB::table('travel_order_counters')
+                        ->where('period_key', $periodKey)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$counter) {
+                        DB::table('travel_order_counters')->insert([
+                            'trip_ticket_id' => $tripTicket->id,
+                            'period_key' => $periodKey,
+                            'current_value' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        $nextValue = 1;
+                    } else {
+                        $nextValue = $counter->current_value + 1;
+                        DB::table('travel_order_counters')
+                            ->where('id', $counter->id)
+                            ->update([
+                                'trip_ticket_id' => $tripTicket->id,
+                                'current_value' => $nextValue,
+                                'updated_at' => now(),
+                            ]);
+                    }
+
+                    $tripTicket->to_no = $periodKey . str_pad($nextValue, 3, '0', STR_PAD_LEFT);
+                    $tripTicket->save();
+                }
+
+                DocumentTracking::create([
+                    'trip_ticket_id' => $tripTicket->id,
+                    'client_id' => $currentClientId,
+                    'document_no' => $tripTicket->document_no ?? $lastGlobalTracking->document_no ?? '',
+                    'route_from' => $comingFrom,
+                    'route_to' => 'Not Applicable',
+                    'status' => 'Received',
+                    'date_released' => null,
+                    'date_received' => now(),
+                ]);
+            });
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to generate TO: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Document received and TO (' . $tripTicket->to_no . ') generated successfully at ' . $userOffice);
     }
 }

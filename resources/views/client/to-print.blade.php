@@ -47,7 +47,9 @@
                         <div class="w-48">
                             <div class="flex mb-2 justify-between">
                                 <span class="font-bold">TO No.:</span>
-                                <span class="border-b border-black w-32 ms-auto" x-text="form.to_no"></span>
+                                <span class="border-b border-black w-32 ms-auto" x-text="form.to_no">
+                                    {{ $tripTicket->to_no ?? '' }}
+                                </span>
                             </div>
                             <div class="flex mb-1 justify-between">
                                 <span class="font-bold">Date:</span>
@@ -64,8 +66,7 @@
                                 <div class="font-bold w-22">Name:</div>
                                 <div class="flex flex-col gap-1">
                                     <template x-for="(p, index) in form.personnel" :key="index">
-                                        <span class="w-56 mb-1 border-b border-black min-h-[1em]"
-                                            x-text="p.name"></span>
+                                        <span class="w-56 mb-1 border-b border-black min-h-[1em]" x-text="p.name"></span>
                                     </template>
                                 </div>
                             </div>

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class TripTicket extends Model
 {
     protected $fillable = [
+        'to_no',
         'client_id',
         'office',
         'purpose',

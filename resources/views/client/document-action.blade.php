@@ -64,80 +64,105 @@
 
         <div class="w-full">
             <flux:card class="space-y-6">
-                <div class="flex flex-col gap-1">
-                    <flux:heading size="lg">Track of Document</flux:heading>
-                    <flux:text size="sm">Manage incoming acceptances or dispatch items onward to neighboring business
-                        departments.</flux:text>
-                </div>
+                @php
+                    $userOffice = is_object(auth()->user()->office)
+                        ? auth()->user()->office->name
+                        : auth()->user()->office;
+                @endphp
 
-                <div class="flex flex-wrap gap-3 pt-2">
-                    @if ($tripTicket->client_id !== auth()->id())
-                        @php
-                            $userOffice = is_object(auth()->user()->office)
-                                ? auth()->user()->office->name
-                                : auth()->user()->office;
-                            $latestLog = $trackings->first();
-                            $isSenderPending =
-                                $latestLog &&
-                                $latestLog->status === 'Released' &&
-                                $latestLog->route_from === $userOffice;
-                            $isAlreadyReceivedByUs =
-                                $latestLog &&
-                                $latestLog->status === 'Received' &&
-                                $latestLog->client_id == auth()->id();
+                @if ($userOffice === 'FAS')
+                    <div class="flex justify-between gap-4">
+                        <div class="flex flex-col gap-1">
+                            <flux:heading size="lg">Track of Document</flux:heading>
+                            <flux:text size="sm">Manage incoming acceptances or dispatch items onward to neighboring
+                                business departments.</flux:text>
+                        </div>
+                        @if ($tripTicket->to_no)
+                            <flux:button disabled variant="filled" icon="check-circle">
+                                TO GENERATED ({{ $tripTicket->to_no }})
+                            </flux:button>
+                        @else
+                            <form action="{{ route('trip-tickets.generate-to', $tripTicket->id) }}" method="POST">
+                                @csrf
+                                <flux:button type="submit" variant="primary" color="emerald" icon="document-text">
+                                    Generate TO
+                                </flux:button>
+                            </form>
+                        @endif
+                    </div>
+                @else
+                    <div class="flex flex-col gap-1">
+                        <flux:heading size="lg">Track of Document</flux:heading>
+                        <flux:text size="sm">Manage incoming acceptances or dispatch items onward to neighboring
+                            business departments.</flux:text>
+                    </div>
 
-                            $cannotReceive = $isSenderPending || $isAlreadyReceivedByUs;
-                        @endphp
+                    <div class="flex flex-wrap gap-3 pt-2">
+                        @if ($tripTicket->client_id !== auth()->id())
+                            @php
+                                $latestLog = $trackings->first();
+                                $isSenderPending =
+                                    $latestLog &&
+                                    $latestLog->status === 'Released' &&
+                                    $latestLog->route_from === $userOffice;
+                                $isAlreadyReceivedByUs =
+                                    $latestLog &&
+                                    $latestLog->status === 'Received' &&
+                                    $latestLog->client_id == auth()->id();
 
-                        <form action="{{ route('client.document-tracking.receive', $tripTicket->id) }}" method="POST">
+                                $cannotReceive = $isSenderPending || $isAlreadyReceivedByUs;
+                            @endphp
+
+                            <form action="{{ route('client.document-tracking.receive', $tripTicket->id) }}" method="POST">
+                                @csrf
+                                <flux:button type="submit" variant="filled" color="emerald" icon="check-circle"
+                                    :disabled="$cannotReceive">
+                                    @if ($isSenderPending)
+                                        Document Forwarded
+                                    @elseif($isAlreadyReceivedByUs)
+                                        Document Received
+                                    @else
+                                        Receive Document
+                                    @endif
+                                </flux:button>
+                            </form>
+                        @endif
+
+                        <form action="{{ route('client.document-tracking.track', $tripTicket->id) }}" method="POST"
+                            class="flex flex-wrap items-end gap-3 w-full sm:w-auto">
                             @csrf
-                            <flux:button type="submit" variant="filled" color="emerald" icon="check-circle"
-                                :disabled="$cannotReceive">
-                                @if ($isSenderPending)
-                                    Document Forwarded
-                                @elseif($isAlreadyReceivedByUs)
-                                    Document Received
-                                @else
-                                    Receive Document
-                                @endif
+                            <input type="hidden" name="document_no"
+                                value="{{ $documentNo === 'N/A' ? '' : $documentNo }}">
+                            <input type="hidden" name="route" id="forward_to_input" required>
+
+                            <div class="w-56">
+                                <flux:dropdown class="w-full">
+                                    <flux:button id="office_dropdown_button" icon-trailing="chevron-down"
+                                        class="w-full [&>svg]:ml-auto text-left justify-between">
+                                        Forwarded to...
+                                    </flux:button>
+                                    <flux:menu class="max-h-60 overflow-y-auto">
+                                        @foreach ($offices as $office)
+                                            <flux:menu.item
+                                                onclick="document.getElementById('forward_to_input').value = '{{ $office }}'; document.getElementById('office_dropdown_button').innerText = '{{ $office }}';">
+                                                {{ $office }}
+                                            </flux:menu.item>
+                                        @endforeach
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </div>
+
+                            <div class="flex-1 min-w-[250px]">
+                                <flux:input name="remarks" placeholder="Remarks..." />
+                            </div>
+
+                            <flux:button type="submit" variant="primary" color="emerald" icon="paper-airplane">
+                                Forward
                             </flux:button>
                         </form>
-                    @endif
+                    </div>
+                @endif
 
-                    <form action="{{ route('client.document-tracking.track', $tripTicket->id) }}" method="POST"
-                        class="flex flex-wrap items-end gap-3 w-full sm:w-auto">
-                        @csrf
-                        <input type="hidden" name="document_no" value="{{ $documentNo === 'N/A' ? '' : $documentNo }}">
-                        <input type="hidden" name="route" id="forward_to_input" required>
-
-                        <div class="w-56">
-                            <flux:dropdown class="w-full">
-                                <flux:button id="office_dropdown_button" icon-trailing="chevron-down"
-                                    class="w-full [&>svg]:ml-auto text-left justify-between">
-                                    Forwarded to...
-                                </flux:button>
-                                <flux:menu class="max-h-60 overflow-y-auto">
-                                    @foreach ($offices as $office)
-                                        <flux:menu.item
-                                            onclick="document.getElementById('forward_to_input').value = '{{ $office }}'; document.getElementById('office_dropdown_button').innerText = '{{ $office }}';">
-                                            {{ $office }}
-                                        </flux:menu.item>
-                                    @endforeach
-                                </flux:menu>
-                            </flux:dropdown>
-                        </div>
-
-                        <div class="flex-1 min-w-[250px]">
-                            <flux:input name="remarks" placeholder="Remarks..." />
-                        </div>
-
-                        <flux:button type="submit" variant="primary" icon="paper-airplane">
-                            Forward
-                        </flux:button>
-                    </form>
-                </div>
-
-                <hr class="border-zinc-200 dark:border-zinc-800/60 my-2" />
 
                 <flux:table>
                     <flux:table.columns>
@@ -148,7 +173,6 @@
                         <flux:table.column>Date and Time</flux:table.column>
                         <flux:table.column>Remarks</flux:table.column>
                         <flux:table.column>Duration</flux:table.column>
-                        {{-- <flux:table.column /> --}}
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -183,15 +207,6 @@
                                 <flux:table.cell class="whitespace-nowrap font-mono text-xs">
                                     {{ $track->calculated_duration }}
                                 </flux:table.cell>
-
-                                {{-- <flux:table.cell class="text-right">
-                                    @if ($track->route_from === auth()->user()->office && is_null($track->date_received) && $track->status !== 'Received')
-                                        <flux:modal.trigger name="delete-tracking-{{ $track->id }}">
-                                            <flux:button variant="danger" size="xs" color="danger" icon="trash"
-                                                square />
-                                        </flux:modal.trigger>
-                                    @endif
-                                </flux:table.cell> --}}
                             </flux:table.row>
                         @empty
                             <flux:table.row>
@@ -213,7 +228,6 @@
                             <div class="space-y-6">
                                 <div>
                                     <flux:heading size="lg">Delete Document Route?</flux:heading>
-
                                     <flux:text class="mt-2">
                                         You're about to delete this document route.<br>
                                         This action cannot be reversed.
@@ -222,11 +236,9 @@
 
                                 <div class="flex gap-2">
                                     <flux:spacer />
-
                                     <flux:modal.close>
                                         <flux:button variant="ghost">Cancel</flux:button>
                                     </flux:modal.close>
-
                                     <flux:button type="submit" variant="danger">Delete</flux:button>
                                 </div>
                             </div>

@@ -49,12 +49,37 @@
                 Travel Order
             </flux:navbar.item>
 
-            @if (\App\Models\DocumentTracking::where('route_to', auth()->user()->office))
-                <flux:navbar.item icon="document-magnifying-glass" href="{{ route('client.document-tracking') }}"
-                    :current="request()->routeIs('client.document-tracking*')">
+            @php
+                $userOffice = auth()->user()->office;
+                $incomingCount = \App\Models\DocumentTracking::from('document_trackings as dt')
+                    ->where('dt.route_to', $userOffice)
+                    ->where('dt.status', 'Released')
+                    ->whereNotExists(function ($query) use ($userOffice) {
+                        $query
+                            ->select(DB::raw(1))
+                            ->from('document_trackings')
+                            ->whereRaw('document_trackings.trip_ticket_id = dt.trip_ticket_id')
+                            ->where('route_from', $userOffice)
+                            ->where('status', 'Received');
+                    })
+                    ->distinct('dt.trip_ticket_id')
+                    ->count();
+            @endphp
+
+            <flux:navbar.item icon="document-magnifying-glass" href="{{ route('client.document-tracking') }}"
+                :current="request()->routeIs('client.document-tracking*')">
+                <span class="relative pr-2.5 inline-block">
                     Document Tracking
-                </flux:navbar.item>
-            @endif
+
+                    @if ($incomingCount > 0)
+                        <span class="absolute top-0 right-0 -mt-1 mr-0.5 flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                    @endif
+                </span>
+            </flux:navbar.item>
         </flux:navbar>
 
         <flux:spacer />

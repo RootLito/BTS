@@ -102,6 +102,8 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::get('/trip-ticket/{tripTicket}/ticket', [TripTicketController::class, 'showTicket'])->name('client.trip-ticket.ticket');
     Route::patch('/trip-ticket/{tripTicket}/add-info', [TripTicketController::class, 'addInfo'])
         ->name('client.trip-ticket.add-info');
+    Route::post('/trip-tickets/{tripTicket}/generate-to', [TravelOrderController::class, 'generateTo'])
+        ->name('trip-tickets.generate-to');
 
 
 

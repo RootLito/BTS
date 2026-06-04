@@ -231,7 +231,7 @@ class TripTicketController extends Controller
                     $receivedText = $receivedLog?->date_received ? $receivedLog->date_received->format($dateFormat) : '--:--';
                 }
 
-                if ($routeName === 'BUDGET') {
+                if ($routeName === 'FAS') {
                     $releasedText = 'Not Applicable';
                     $isReleased = !is_null($receivedLog);
                 } else {
