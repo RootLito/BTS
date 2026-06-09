@@ -8,6 +8,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TripTicketController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TravelOrderController;
+use App\Http\Controllers\ToReportController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
@@ -107,12 +108,12 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
 
 
 
-    Route::get('/client/travel-order/{tripTicket}', [TravelOrderController::class, 'show'])
-        ->name('client.travel-order.show');
-    Route::patch('/client/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])
-        ->name('client.travel-order.store');
-    Route::post('/client/travel-order/{tripTicket}/track', [TravelOrderController::class, 'track'])
-        ->name('client.travel-order.track');
+    Route::get('/trip-ticket/travel-order/{tripTicket}', [TravelOrderController::class, 'show'])
+        ->name('client.trip-ticket.travel-order.show');
+    Route::patch('/trip-ticket/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])
+        ->name('client.trip-ticket.travel-order.store');
+    Route::post('/trip-ticket/travel-order/{tripTicket}/track', [TravelOrderController::class, 'track'])
+        ->name('client.trip-ticket.travel-order.track');
 
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'clientRead'])->name('client.notification.read');
 
@@ -121,6 +122,11 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::post('/document-tracking/{tripTicket}/track', [TravelOrderController::class, 'track'])->name('client.document-tracking.track');
     Route::post('/document-tracking/{tripTicket}/receive', [TravelOrderController::class, 'receive'])->name('client.document-tracking.receive');
     Route::delete('/document-tracking/{id}', [TravelOrderController::class, 'destroy'])->name('client.document-tracking.destroy');
+
+    Route::get('/to-report', [ToReportController::class, 'index'])->name('client.to-report');
+    Route::post('/to-report', [ToReportController::class, 'store'])->name('to-report.store');
+    Route::put('/to-report/{id}', [ToReportController::class, 'update'])->name('to-report.update');
+    Route::delete('/to-report/{id}', [ToReportController::class, 'destroy'])->name('to-report.destroy');
 
 
     Route::get('/trip-history', function () {

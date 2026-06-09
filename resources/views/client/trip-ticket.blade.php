@@ -153,7 +153,7 @@
                                             </flux:menu.item>
 
                                             <flux:menu.item icon="document-text"
-                                                href="{{ route('client.travel-order.show', $ticket->id) }}">
+                                                href="{{ route('client.trip-ticket.travel-order.show', $ticket->id) }}">
                                                 Travel Order
                                             </flux:menu.item>
 

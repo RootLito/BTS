@@ -69,9 +69,29 @@
             <flux:navbar.item icon="document-magnifying-glass" href="{{ route('client.document-tracking') }}"
                 :current="request()->routeIs('client.document-tracking*')">
                 <span class="relative pr-2.5 inline-block">
-                    Document Tracking
+                    Tracking
 
-                    @if ($incomingCount > 0)
+                    @php
+                        $globalUnreadCount = 0;
+                        if (auth()->check()) {
+                            $rawOffice = auth()->user()->office ?? (auth()->user()->client->office ?? null);
+
+                            if ($rawOffice) {
+                                $userOffice = strtolower(trim($rawOffice));
+
+                                $globalUnreadCount = \App\Models\DocumentTracking::whereHas('tripTicket', function (
+                                    $query,
+                                ) {
+                                    $query->whereNull('to_no')->orWhere('to_no', '');
+                                })
+                                    ->whereRaw('LOWER(TRIM(route_to)) = ?', [$userOffice])
+                                    ->whereRaw('LOWER(TRIM(route_from)) != ?', [$userOffice])
+                                    ->count();
+                            }
+                        }
+                    @endphp
+
+                    @if ($globalUnreadCount > 0)
                         <span class="absolute top-0 right-0 -mt-1 mr-0.5 flex h-2 w-2">
                             <span
                                 class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -79,6 +99,11 @@
                         </span>
                     @endif
                 </span>
+            </flux:navbar.item>
+
+            <flux:navbar.item icon="clipboard-document-check" href="{{ route('client.to-report') }}"
+                :current="request()->routeIs('client.to-report*')">
+                TO Report
             </flux:navbar.item>
         </flux:navbar>
 

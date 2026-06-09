@@ -74,8 +74,10 @@ class TravelOrderController extends Controller
                 'recommended_by' => [],
             ]);
         }
+
+        // CHANGE THIS LINE: Force it to check the absolute newest record by database ID
         $latestTracking = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
-            ->latest()
+            ->orderBy('id', 'desc')
             ->first();
 
         $offices = Client::whereNotNull('office')
@@ -83,6 +85,7 @@ class TravelOrderController extends Controller
             ->pluck('office')
             ->unique()
             ->values();
+
         return view('client.travel-order', compact('travelOrder', 'tripTicket', 'offices', 'latestTracking'));
     }
 
@@ -195,7 +198,7 @@ class TravelOrderController extends Controller
         $receivedTicketIds = DocumentTracking::where('status', 'Received')
             ->where(function ($q) use ($userOffice) {
                 $q->where('route_from', $userOffice)
-                    ->orWhere('route_to', $userOffice); 
+                    ->orWhere('route_to', $userOffice);
             })
             ->pluck('trip_ticket_id')
             ->toArray();

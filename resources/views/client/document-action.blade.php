@@ -2,6 +2,10 @@
 
 @section('content')
     <div class="flex flex-col gap-6 w-full overflow-y-auto">
+        <flux:button icon="arrow-uturn-left" variant="filled" color="red" href="{{ route('client.document-tracking') }}" class="w-32 mt-2">
+            Back
+        </flux:button>
+
         <div class="w-full">
             <flux:card class="space-y-4">
                 <div>

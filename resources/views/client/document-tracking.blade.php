@@ -19,7 +19,17 @@
                     @forelse($documents as $doc)
                         <flux:table.row>
                             <flux:table.cell class="font-bold text-zinc-800 dark:text-zinc-200">
-                                {{ $doc->document_no }}
+                                <div class="relative inline-flex items-center gap-2">
+                                    {{ $doc->document_no }}
+
+                                    @if (empty($doc->tripTicket->to_no) && $doc->route_from !== auth()->user()->office)
+                                        <span class="flex h-2 w-2 relative">
+                                            <span
+                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                        </span>
+                                    @endif
+                                </div>
                             </flux:table.cell>
 
                             <flux:table.cell>
@@ -47,18 +57,18 @@
                                     View Details
                                 </flux:button>
                             </flux:table.cell>
-                        </flux:table.row>
-                    @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="5" class="py-12 text-center">
-                                <div class="flex flex-col items-center justify-center space-y-2">
-                                    <flux:icon name="document-text" class="size-8 text-zinc-400" />
-                                    <flux:text variant="strong" class="text-zinc-500">No active documents</flux:text>
-                                    <flux:text size="sm" class="text-zinc-400">No active documents are currently routed
-                                        to your office.</flux:text>
-                                </div>
-                            </flux:table.cell>
-                        </flux:table.row>
+                            </flux:row>
+                        @empty
+                            <flux:table.row>
+                                <flux:table.cell colspan="5" class="py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center space-y-2">
+                                        <flux:icon name="document-text" class="size-8 text-zinc-400" />
+                                        <flux:text variant="strong" class="text-zinc-500">No active documents</flux:text>
+                                        <flux:text size="sm" class="text-zinc-400">No active documents are currently
+                                            routed to your office.</flux:text>
+                                    </div>
+                                </flux:table.cell>
+                            </flux:table.row>
                     @endforelse
                 </flux:table.rows>
             </flux:table>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TripTicket extends Model
 {
@@ -31,6 +32,11 @@ class TripTicket extends Model
         'end_date' => 'date',
     ];
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
+
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class);
@@ -49,5 +55,10 @@ class TripTicket extends Model
     public function documentTrackings(): HasMany
     {
         return $this->hasMany(DocumentTracking::class, 'trip_ticket_id');
+    }
+
+    public function toReport(): HasOne
+    {
+        return $this->hasOne(ToReport::class);
     }
 }
