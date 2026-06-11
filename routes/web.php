@@ -127,6 +127,7 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::post('/to-report', [ToReportController::class, 'store'])->name('to-report.store');
     Route::put('/to-report/{id}', [ToReportController::class, 'update'])->name('to-report.update');
     Route::delete('/to-report/{id}', [ToReportController::class, 'destroy'])->name('to-report.destroy');
+    Route::get('/to-report/export', [ToReportController::class, 'export'])->name('to-report.export');
 
 
     Route::get('/trip-history', function () {

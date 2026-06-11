@@ -4,34 +4,62 @@ namespace App\Http\Controllers;
 
 use App\Models\TripTicket;
 use App\Models\ToReport;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\ReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ToReportController extends Controller
 {
+
     public function index(Request $request)
     {
         $user = Auth::guard('client')->user();
-        $sortDirection = $request->get('sort') === 'oldest' ? 'asc' : 'desc';
+        $relations = $user->office === 'FAS' ? ['toReport', 'user'] : ['toReport'];
 
-        $query = TripTicket::with($user->office === 'FAS' ? ['toReport', 'user'] : ['toReport']);
+        $query = TripTicket::with($relations)->whereYear('start_date', '>=', 2025);
 
-        if ($user->office !== 'FAS') {
+        if ($user->office === 'FAS') {
+            $query->whereDate('end_date', '<', now()->toDateString());
+        } else {
             $query->where('client_id', $user->id);
         }
 
-        $tripTickets = $query->when($request->filled('search'), function ($q) use ($request) {
+        $query->when($request->filled('search'), function ($q) use ($request) {
             $search = $request->get('search');
             $q->where(function ($subQ) use ($search) {
                 $subQ->where('to_no', 'like', "%{$search}%")
                     ->orWhere('destination', 'like', "%{$search}%");
             });
-        })
-            ->orderBy('start_date', $sortDirection)
+        });
+
+        $query->when($request->filled('office') && $user->office === 'FAS', function ($q) use ($request) {
+            $office = $request->get('office');
+            $q->whereHas('user', function ($subQ) use ($office) {
+                $subQ->where('office', $office);
+            });
+        });
+
+        $query->when($request->filled('year'), function ($q) use ($request) {
+            $q->whereYear('start_date', $request->get('year'));
+        });
+
+        $query->when($request->filled('month'), function ($q) use ($request) {
+            $q->whereMonth('start_date', $request->get('month'));
+        });
+
+        $tripTickets = $query->orderBy('start_date', 'desc')
             ->paginate(10)
             ->withQueryString();
 
-        return view('client.to-report', compact('tripTickets'));
+        $offices = Client::whereNotNull('office')
+            ->where('office', '!=', '')
+            ->distinct()
+            ->orderBy('office', 'asc')
+            ->pluck('office');
+
+        return view('client.to-report', compact('tripTickets', 'offices'));
     }
 
     public function store(Request $request)
@@ -91,5 +119,40 @@ class ToReportController extends Controller
         $report->delete();
 
         return redirect()->back()->with('success', 'Travel report deleted successfully!');
+    }
+
+    public function export(Request $request)
+    {
+        $user = Auth::guard('client')->user();
+        $relations = $user->office === 'FAS' ? ['toReport', 'user'] : ['toReport'];
+
+        $query = TripTicket::with($relations)->whereYear('start_date', '>=', 2025);
+
+        if ($user->office === 'FAS') {
+            $query->has('toReport');
+        } else {
+            $query->where('client_id', $user->id)
+                ->whereDate('end_date', '<', now()->toDateString());
+        }
+
+        $query->when($request->filled('search'), function ($q) use ($request) {
+            $search = $request->get('search');
+            $q->where(function ($subQ) use ($search) {
+                $subQ->where('to_no', 'like', "%{$search}%")
+                    ->orWhere('destination', 'like', "%{$search}%");
+            });
+        });
+
+        $query->when($request->filled('year'), function ($q) use ($request) {
+            $q->whereYear('start_date', $request->get('year'));
+        });
+
+        $query->when($request->filled('month'), function ($q) use ($request) {
+            $q->whereMonth('start_date', $request->get('month'));
+        });
+
+        $tickets = $query->orderBy('start_date', 'desc')->get();
+
+        return Excel::download(new ReportExport($tickets), 'travel_report_' . now()->format('Y-m-d') . '.xlsx');
     }
 }

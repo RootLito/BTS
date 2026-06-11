@@ -59,6 +59,6 @@ class TripTicket extends Model
 
     public function toReport(): HasOne
     {
-        return $this->hasOne(ToReport::class);
+        return $this->hasOne(ToReport::class, 'trip_ticket_id');
     }
 }

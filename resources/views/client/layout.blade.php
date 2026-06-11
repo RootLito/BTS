@@ -103,7 +103,27 @@
 
             <flux:navbar.item icon="clipboard-document-check" href="{{ route('client.to-report') }}"
                 :current="request()->routeIs('client.to-report*')">
-                TO Report
+                <span class="relative pr-2.5 inline-block">
+                    TO Report
+
+                    @php
+                        $pendingReportsCount = 0;
+                        if (auth()->check()) {
+                            $pendingReportsCount = \App\Models\TripTicket::where('client_id', auth()->id())
+                                ->where('end_date', '<', now()->startOfDay())
+                                ->doesntHave('toReport')
+                                ->count();
+                        }
+                    @endphp
+
+                    @if ($pendingReportsCount > 0)
+                        <span class="absolute top-0 right-0 -mt-1 mr-0.5 flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                    @endif
+                </span>
             </flux:navbar.item>
         </flux:navbar>
 

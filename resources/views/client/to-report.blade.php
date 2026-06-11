@@ -13,41 +13,105 @@
     @endif
 
     <div class="mt-6 mb-4">
-        <form action="{{ route('client.to-report') }}" method="GET" class="flex items-center gap-2">
-            <div class="w-full max-w-xs">
-                <flux:input name="search" value="{{ request('search') }}" icon="magnifying-glass"
-                    placeholder="Search trips..." />
-            </div>
+        <div class="mt-6 mb-4">
+            <div class="flex items-center justify-between gap-2">
+                <!-- Filter Form Items wrapper -->
+                <form action="{{ route('client.to-report') }}" method="GET" class="flex flex-1 items-center gap-2">
+                    <!-- Search Input -->
+                    <div class="w-full max-w-xs">
+                        <flux:input name="search" value="{{ request('search') }}" icon="magnifying-glass"
+                            placeholder="Search trips..." />
+                    </div>
 
-            <flux:dropdown>
-                <flux:button icon:trailing="chevron-down">
-                    {{ request('sort') === 'oldest' ? 'Old - New' : 'New - Old' }}
+                    @if (auth()->guard('client')->user()->office === 'FAS')
+                        <flux:dropdown>
+                            <flux:button icon:trailing="chevron-down">
+                                {{ request('office') ? request('office') : 'Select Office' }}
+                            </flux:button>
+                            <flux:menu class="max-h-60 overflow-y-auto">
+                                <flux:menu.radio.group name="office" value="{{ request('office') }}">
+                                    <flux:menu.item
+                                        href="{{ route('client.to-report', array_merge(request()->query(), ['office' => ''])) }}">
+                                        All Offices
+                                    </flux:menu.item>
+                                    @foreach ($offices as $officeOption)
+                                        <flux:menu.item
+                                            href="{{ route('client.to-report', array_merge(request()->query(), ['office' => $officeOption])) }}">
+                                            {{ $officeOption }}
+                                        </flux:menu.item>
+                                    @endforeach
+                                </flux:menu.radio.group>
+                            </flux:menu>
+                        </flux:dropdown>
+                    @endif
+
+                    <!-- Year Filter Dropdown -->
+                    <flux:dropdown>
+                        <flux:button icon:trailing="chevron-down">
+                            {{ request('year') ? request('year') : 'Select Year' }}
+                        </flux:button>
+                        <flux:menu class="max-h-60 overflow-y-auto">
+                            <flux:menu.radio.group name="year" value="{{ request('year') }}">
+                                <flux:menu.item
+                                    href="{{ route('client.to-report', array_merge(request()->query(), ['year' => ''])) }}">
+                                    All Years
+                                </flux:menu.item>
+                                @foreach (range(date('Y'), 2025) as $year)
+                                    <flux:menu.item
+                                        href="{{ route('client.to-report', array_merge(request()->query(), ['year' => $year])) }}">
+                                        {{ $year }}
+                                    </flux:menu.item>
+                                @endforeach
+                            </flux:menu.radio.group>
+                        </flux:menu>
+                    </flux:dropdown>
+
+                    <!-- Month Filter Dropdown -->
+                    <flux:dropdown>
+                        <flux:button icon:trailing="chevron-down">
+                            @if (request('month'))
+                                {{ DateTime::createFromFormat('!m', request('month'))->format('F') }}
+                            @else
+                                Select Month
+                            @endif
+                        </flux:button>
+                        <flux:menu class="max-h-60 overflow-y-auto">
+                            <flux:menu.radio.group name="month" value="{{ request('month') }}">
+                                <flux:menu.item
+                                    href="{{ route('client.to-report', array_merge(request()->query(), ['month' => ''])) }}">
+                                    All Months
+                                </flux:menu.item>
+                                @foreach (range(1, 12) as $monthNum)
+                                    @php
+                                        $monthName = DateTime::createFromFormat('!m', $monthNum)->format('F');
+                                    @endphp
+                                    <flux:menu.item
+                                        href="{{ route('client.to-report', array_merge(request()->query(), ['month' => $monthNum])) }}">
+                                        {{ $monthName }}
+                                    </flux:menu.item>
+                                @endforeach
+                            </flux:menu.radio.group>
+                        </flux:menu>
+                    </flux:dropdown>
+
+                    <div class="flex gap-2">
+                        <flux:button type="submit" variant="primary" color="emerald">Filter</flux:button>
+
+                        @if (request()->anyFilled(['search', 'year', 'month']))
+                            <flux:button href="{{ route('client.to-report') }}" variant="filled" color="zinc"
+                                icon="x-mark">
+                                Clear
+                            </flux:button>
+                        @endif
+                    </div>
+                </form>
+
+                <flux:button href="{{ route('to-report.export', request()->query()) }}" variant="filled" color="zinc"
+                    icon="document-arrow-down">
+                    Export Excel
                 </flux:button>
-
-                <flux:menu>
-                    <flux:menu.radio.group name="sort" value="{{ request('sort', 'latest') }}">
-                        <flux:menu.item
-                            href="{{ route('client.to-report', ['sort' => 'latest', 'search' => request('search')]) }}">
-                            New - Old
-                        </flux:menu.item>
-                        <flux:menu.item
-                            href="{{ route('client.to-report', ['sort' => 'oldest', 'search' => request('search')]) }}">
-                            Old - New
-                        </flux:menu.item>
-                    </flux:menu.radio.group>
-                </flux:menu>
-            </flux:dropdown>
-
-            <div class="flex gap-2">
-                <flux:button type="submit" variant="primary" color="emerald">Filter</flux:button>
-
-                @if (request()->anyFilled(['search', 'sort']))
-                    <flux:button href="{{ route('client.to-report') }}" variant="filled" color="zinc" icon="x-mark">
-                        Clear
-                    </flux:button>
-                @endif
             </div>
-        </form>
+        </div>
     </div>
 
     <div class="mt-4">
@@ -117,6 +181,7 @@
                         <flux:table.column>Trip Ticket No.</flux:table.column>
                         <flux:table.column>Destination</flux:table.column>
                         <flux:table.column>Travel Date</flux:table.column>
+                        <flux:table.column>Status</flux:table.column>
                         <flux:table.column>Report Status</flux:table.column>
                         <flux:table.column>Actions</flux:table.column>
                     </flux:table.columns>
@@ -124,8 +189,18 @@
                     <flux:table.rows>
                         @forelse ($tripTickets as $ticket)
                             <flux:table.row>
-                                <flux:table.cell class="font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {{ $ticket->to_no ?? '' }}
+                                <flux:table.cell class="font-bold text-zinc-800 dark:text-zinc-200">
+                                    <div class="relative inline-flex items-center gap-2">
+                                        {{ $ticket->to_no ?? '' }}
+
+                                        @if (empty($ticket->toReport) && $ticket->end_date?->isPast())
+                                            <span class="flex h-2 w-2 relative">
+                                                <span
+                                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                            </span>
+                                        @endif
+                                    </div>
                                 </flux:table.cell>
 
                                 <flux:table.cell>
@@ -140,6 +215,15 @@
                                             {{ $ticket->end_date?->format('M d, Y') }}
                                         </span>
                                     </div>
+                                </flux:table.cell>
+
+                                <flux:table.cell>
+                                    @if ($ticket->end_date && $ticket->end_date->isPast())
+                                        <flux:badge color="emerald" size="sm" inset="top bottom">Completed</flux:badge>
+                                    @else
+                                        <flux:badge color="sky" size="sm" inset="top bottom">In Progress
+                                        </flux:badge>
+                                    @endif
                                 </flux:table.cell>
 
                                 <flux:table.cell>
