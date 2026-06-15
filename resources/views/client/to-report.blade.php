@@ -178,7 +178,7 @@
             @else
                 <flux:table>
                     <flux:table.columns>
-                        <flux:table.column>Trip Ticket No.</flux:table.column>
+                        <flux:table.column>TO No.</flux:table.column>
                         <flux:table.column>Destination</flux:table.column>
                         <flux:table.column>Travel Date</flux:table.column>
                         <flux:table.column>Status</flux:table.column>
@@ -255,13 +255,21 @@
                                                 </flux:button>
                                             </flux:modal.trigger>
                                         @else
-                                            <flux:modal.trigger name="create-report-modal-{{ $ticket->id }}">
+                                            @if ($ticket->end_date?->isPast())
+                                                <flux:modal.trigger name="create-report-modal-{{ $ticket->id }}">
+                                                    <flux:button size="sm" variant="primary" color="emerald"
+                                                        class="bg-emerald-600 hover:bg-emerald-700 text-white border-none"
+                                                        icon="document-plus">
+                                                        Create Report
+                                                    </flux:button>
+                                                </flux:modal.trigger>
+                                            @else
                                                 <flux:button size="sm" variant="primary" color="emerald"
-                                                    class="bg-emerald-600 hover:bg-emerald-700 text-white border-none"
-                                                    icon="document-plus">
+                                                    class="bg-emerald-600/50 text-white/50 border-none cursor-not-allowed pointer-events-none"
+                                                    icon="document-plus" disabled>
                                                     Create Report
                                                 </flux:button>
-                                            </flux:modal.trigger>
+                                            @endif
                                         @endif
                                     </div>
                                 </flux:table.cell>

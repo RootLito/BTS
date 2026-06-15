@@ -283,6 +283,67 @@ class TravelOrderController extends Controller
 
 
     // GENERATE TO 
+    // public function generateTo(TripTicket $tripTicket)
+    // {
+    //     $userOffice = is_object(auth()->user()->office) ? auth()->user()->office->name : auth()->user()->office;
+    //     $currentClientId = auth()->id();
+    //     $lastGlobalTracking = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
+    //         ->latest()
+    //         ->first();
+    //     $comingFrom = $lastGlobalTracking ? $lastGlobalTracking->route_from : 'Origin';
+
+    //     try {
+    //         DB::transaction(function () use ($tripTicket, $currentClientId, $lastGlobalTracking, $comingFrom) {
+    //             if (empty($tripTicket->to_no)) {
+    //                 $periodKey = Carbon::now()->format('Yn');
+
+    //                 $counter = DB::table('travel_order_counters')
+    //                     ->where('period_key', $periodKey)
+    //                     ->lockForUpdate()
+    //                     ->first();
+
+    //                 if (!$counter) {
+    //                     DB::table('travel_order_counters')->insert([
+    //                         'trip_ticket_id' => $tripTicket->id,
+    //                         'period_key' => $periodKey,
+    //                         'current_value' => 1,
+    //                         'created_at' => now(),
+    //                         'updated_at' => now(),
+    //                     ]);
+    //                     $nextValue = 1;
+    //                 } else {
+    //                     $nextValue = $counter->current_value + 1;
+    //                     DB::table('travel_order_counters')
+    //                         ->where('id', $counter->id)
+    //                         ->update([
+    //                             'trip_ticket_id' => $tripTicket->id,
+    //                             'current_value' => $nextValue,
+    //                             'updated_at' => now(),
+    //                         ]);
+    //                 }
+
+    //                 $tripTicket->to_no = $periodKey . str_pad($nextValue, 3, '0', STR_PAD_LEFT);
+    //                 $tripTicket->save();
+    //             }
+
+    //             DocumentTracking::create([
+    //                 'trip_ticket_id' => $tripTicket->id,
+    //                 'client_id' => $currentClientId,
+    //                 'document_no' => $tripTicket->document_no ?? $lastGlobalTracking->document_no ?? '',
+    //                 'route_from' => $comingFrom,
+    //                 'route_to' => 'Not Applicable',
+    //                 'status' => 'Received',
+    //                 'date_released' => null,
+    //                 'date_received' => now(),
+    //             ]);
+    //         });
+
+    //     } catch (\Exception $e) {
+    //         return redirect()->back()->with('error', 'Failed to generate TO: ' . $e->getMessage());
+    //     }
+
+    //     return redirect()->back()->with('success', 'Document received and TO (' . $tripTicket->to_no . ') generated successfully at ' . $userOffice);
+    // }
     public function generateTo(TripTicket $tripTicket)
     {
         $userOffice = is_object(auth()->user()->office) ? auth()->user()->office->name : auth()->user()->office;
@@ -322,7 +383,9 @@ class TravelOrderController extends Controller
                             ]);
                     }
 
-                    $tripTicket->to_no = $periodKey . str_pad($nextValue, 3, '0', STR_PAD_LEFT);
+                    $formattedYear = Carbon::now()->format('Y-');
+                    $monthAndCounter = Carbon::now()->format('n') . str_pad($nextValue, 3, '0', STR_PAD_LEFT);
+                    $tripTicket->to_no = $formattedYear . $monthAndCounter;
                     $tripTicket->save();
                 }
 
