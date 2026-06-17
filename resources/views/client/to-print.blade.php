@@ -17,7 +17,7 @@
             return lines;
         }
     }">
-        <div class="fixed inset-0 top-[65px] overflow-y-auto">
+        <div class="fixed inset-0 top-[65px] overflow-y-auto print:static print:overflow-visible">
 
             {{-- Action Buttons --}}
             <div class="w-[8.5in] h-10 mx-auto my-4 flex justify-between items-center print:hidden">
@@ -35,7 +35,7 @@
                 </div>
             </div>
 
-            <div class="printable-folio bg-white mx-auto shadow-lg print:shadow-none mb-4">
+            <div class="printable-folio bg-white mx-auto shadow-lg print:shadow-none mb-4 print:fixed print:top-0 print:left-0">
                 <img src="{{ asset('images/top.png') }}" alt="Header" class="top">
 
                 <div class="ticket-container">

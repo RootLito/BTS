@@ -203,7 +203,7 @@
                                     <flux:subheading>Manage authorized passengers for this booking.</flux:subheading>
                                 </div>
                                 <div class="flex gap-2">
-                                    <flux:input x-model="newName" @keydown.enter.prevent="add()" class="w-full" placeholder="Type name, Position" />
+                                    <flux:input x-model="newName" @keydown.enter.prevent="add()" class="w-full" placeholder="Name" />
                                     <flux:button @click="add()" variant="primary" color="emerald">Add</flux:button>
                                 </div>
                                 <flux:separator />

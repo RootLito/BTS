@@ -10,7 +10,6 @@
     <link rel="icon" href="{{ asset('images/bfar.png') }}" type="image/png">
     <title>Client</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @fluxAppearance
 </head>
 
 <body class="h-screen overflow-hidden bg-zinc-100 dark:bg-zinc-800 antialiased flex flex-col">

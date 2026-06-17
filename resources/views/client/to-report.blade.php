@@ -181,7 +181,7 @@
                         <flux:table.column>TO No.</flux:table.column>
                         <flux:table.column>Destination</flux:table.column>
                         <flux:table.column>Travel Date</flux:table.column>
-                        <flux:table.column>Status</flux:table.column>
+                        <flux:table.column>Travel Status</flux:table.column>
                         <flux:table.column>Report Status</flux:table.column>
                         <flux:table.column>Actions</flux:table.column>
                     </flux:table.columns>

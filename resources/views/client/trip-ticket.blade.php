@@ -269,70 +269,101 @@
         </flux:modal>
 
         <flux:modal :name="'view-ticket-' . $ticket->id" class="md:w-[600px]">
-            <div class="space-y-6">
-                <div class="flex items-center gap-3">
-                    <flux:icon name="information-circle" class="size-6 text-emerald-500" />
-                    <flux:heading size="lg">Trip Details</flux:heading>
+            <div>
+                <div class="flex gap-4 items-start mb-6">
+                    <div>
+                        <flux:heading size="lg" class="font-semibold text-zinc-900 dark:text-white">Trip Details
+                        </flux:heading>
+                    </div>
+
+                    @php
+                        $statusData = match ($ticket->status) {
+                            'Pending' => ['color' => 'yellow', 'icon' => 'clock'],
+                            'Approved' => ['color' => 'blue', 'icon' => 'check-circle'],
+                            'Cancelled' => ['color' => 'red', 'icon' => 'x-circle'],
+                            'Completed' => ['color' => 'emerald', 'icon' => 'flag'],
+                            default => ['color' => 'zinc', 'icon' => 'question-mark-circle'],
+                        };
+                    @endphp
+
+                    <flux:badge :color="$statusData['color']" :icon="$statusData['icon']" variant="pill" size="sm"
+                        class="px-2.5 py-0.5 font-medium">
+                        {{ $ticket->status }}
+                    </flux:badge>
                 </div>
 
-                <div class="grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-6">
                     <flux:field>
-                        <flux:label>Destination</flux:label>
-                        <flux:text class="font-medium text-zinc-800 dark:text-white">
-                            {{ $ticket->destination }}</flux:text>
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Status</flux:label>
-                        <div>
-                            <flux:badge color="emerald" inset="top bottom">
-                                {{ $ticket->status }}</flux:badge>
-                        </div>
-                    </flux:field>
-
-                    <flux:field class="col-span-2">
-                        <flux:label>Purpose</flux:label>
-                        <flux:text>{{ $ticket->purpose ?? 'No purpose provided' }}</flux:text>
-                    </flux:field>
-
-                    <flux:field class="col-span-2">
-                        <flux:label>Passenger(s)</flux:label>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            @php
-                                $passengers = is_array($ticket->passengers)
-                                    ? $ticket->passengers
-                                    : json_decode($ticket->passengers ?? '[]', true);
-                            @endphp
-
-                            @forelse($passengers as $passenger)
-                                <flux:badge variant="outline" size="sm" icon="user">
-                                    {{ $passenger }}</flux:badge>
-                            @empty
-                                <flux:text size="sm" class="italic text-zinc-400">Driver
-                                    only</flux:text>
-                            @endforelse
-                        </div>
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Departure</flux:label>
-                        <flux:text>
-                            {{ \Carbon\Carbon::parse($ticket->start_date)->format('M d, Y') }}
+                        <flux:label class="text-xs uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">
+                            Destination</flux:label>
+                        <flux:text variant="strong" size="lg" class="block mt-1 text-zinc-900 dark:text-white">
+                            {{ $ticket->destination }}
                         </flux:text>
                     </flux:field>
 
                     <flux:field>
-                        <flux:label>Return</flux:label>
-                        <flux:text>
-                            {{ \Carbon\Carbon::parse($ticket->end_date)->format('M d, Y') }}
+                        <flux:label class="text-xs uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">
+                            Purpose</flux:label>
+                        <flux:text class="block mt-1 text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                            {{ $ticket->purpose ?? 'No purpose provided' }}
                         </flux:text>
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label class="text-xs uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">
+                            Departure</flux:label>
+                        <div class="flex items-center gap-2 mt-1.5 text-zinc-800 dark:text-zinc-200">
+                            <flux:icon name="calendar" variant="micro" class="text-zinc-400 dark:text-zinc-500" />
+                            <flux:text font="medium">
+                                {{ \Carbon\Carbon::parse($ticket->start_date)->format('M d, Y (l)') }}</flux:text>
+                        </div>
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label class="text-xs uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">
+                            Return</flux:label>
+                        <div class="flex items-center gap-2 mt-1.5 text-zinc-800 dark:text-zinc-200">
+                            <flux:icon name="calendar" variant="micro" class="text-zinc-400 dark:text-zinc-500" />
+                            <flux:text font="medium">{{ \Carbon\Carbon::parse($ticket->end_date)->format('M d, Y (l)') }}
+                            </flux:text>
+                        </div>
                     </flux:field>
                 </div>
 
-                <div class="flex justify-end">
-                    <flux:modal.close>
-                        <flux:button variant="filled">Close</flux:button>
-                    </flux:modal.close>
+                <flux:separator class="my-6" />
+
+                <div>
+                    @php
+                        $passengers = is_array($ticket->passengers)
+                            ? $ticket->passengers
+                            : json_decode($ticket->passengers ?? '[]', true);
+                    @endphp
+
+                    <div class="flex items-center gap-2 mb-4">
+                        <flux:heading size="sm" class="font-semibold text-zinc-800 dark:text-zinc-200">Passenger(s)
+                        </flux:heading>
+                        <flux:badge size="sm" variant="subtle" class="rounded-full px-2 text-xs">
+                            {{ count($passengers) }}
+                        </flux:badge>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        @forelse($passengers as $passenger)
+                            <div
+                                class="flex items-center gap-2.5 p-2.5 rounded-lg bg-zinc-50 dark:bg-white/5 border border-zinc-200/60 dark:border-white/10 transition-colors hover:bg-zinc-100/50 dark:hover:bg-white/[0.07]">
+                                <flux:icon name="user" variant="micro" class="text-zinc-400 dark:text-zinc-500" />
+                                <flux:text size="sm" class="font-medium text-zinc-700 dark:text-zinc-300">
+                                    {{ $passenger }}</flux:text>
+                            </div>
+                        @empty
+                            <div
+                                class="col-span-2 flex items-center justify-center p-6 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20">
+                                <flux:icon name="user" variant="micro" class="text-zinc-400 mr-1" />
+                                <flux:text italic size="sm" class="text-zinc-400 dark:text-zinc-500">Driver only
+                                </flux:text>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </flux:modal>
