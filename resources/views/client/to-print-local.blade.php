@@ -35,30 +35,28 @@
                 </div>
             </div>
 
-            <div
-                class="printable-folio bg-white mx-auto shadow-lg print:shadow-none mb-4 print:fixed print:top-0 print:left-0">
+            <div class="printable-folio bg-white mx-auto shadow-lg print:shadow-none mb-4 print:fixed print:top-0 print:left-0">
                 <img src="{{ asset('images/top.png') }}" alt="Header" class="top">
 
                 <div class="ticket-container">
-                    <div class="flex justify-end text-[11pt] leading-none my-6">
+                    <div class="text-center mb-6">
+                        <h1 class="text-[16pt] font-bold leading-none uppercase my-4">TRAVEL ORDER</h1>
+                    </div>
+
+                    <div class="flex justify-end text-[11pt] leading-none mb-8">
                         <div class="w-48">
+                            <div class="flex mb-2 justify-between">
+                                <span class="font-bold">TO No.:</span>
+                                <span class="border-b border-black w-32 ms-auto" x-text="form.to_no"></span>
+                            </div>
                             <div class="flex mb-1 justify-between">
                                 <span class="font-bold">Date:</span>
-                                <span class="font-bold w-32 ms-auto"
+                                <span class="border-b border-black font-bold w-32 ms-auto"
                                     x-text="form.date ? new Date(form.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''">
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <div class="text-center mb-8">
-                        <h1 class="text-[16pt] font-bold leading-none uppercase my-4">TRAVEL ORDER NO.___________</h1>
-                    </div>
-
-                    <div class="text-[11pt] leading-none mb-8">
-                        <h2 class="font-bold leading-none uppercase my-4">TRAVEL ORDER NO.___________</h2>
-                    </div>
-
-
 
                     <div class="text-[11pt] leading-none">
                         <div class="w-full flex mb-4">
@@ -66,7 +64,8 @@
                                 <div class="font-bold w-22">Name:</div>
                                 <div class="flex flex-col gap-1">
                                     <template x-for="(p, index) in form.personnel" :key="index">
-                                        <span class="w-56 mb-1 border-b border-black min-h-[1em]" x-text="p.name"></span>
+                                        <span class="w-56 mb-1 border-b border-black min-h-[1em]"
+                                            x-text="p.name"></span>
                                     </template>
                                 </div>
                             </div>

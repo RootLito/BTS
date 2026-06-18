@@ -136,35 +136,37 @@
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    <flux:modal.trigger :name="'track-ticket-' . $ticket->id">
-                                        <flux:button icon="map">Track Status</flux:button>
-                                    </flux:modal.trigger>
-                                    <flux:dropdown>
-                                        <flux:button icon-trailing="chevron-down" class="text-sm">Actions</flux:button>
-                                        <flux:menu>
-                                            {{-- VIEW TRIGGER --}}
-                                            <flux:modal.trigger :name="'view-ticket-' . $ticket->id">
-                                                <flux:menu.item icon="eye">View</flux:menu.item>
-                                            </flux:modal.trigger>
+                                    <div class="flex gap-2 items-center">
+                                        <flux:modal.trigger :name="'track-ticket-' . $ticket->id">
+                                            <flux:button icon="map">Track</flux:button>
+                                        </flux:modal.trigger>
+                                        <flux:dropdown>
+                                            <flux:button icon-trailing="chevron-down" class="text-sm">Actions</flux:button>
+                                            <flux:menu>
+                                                {{-- VIEW TRIGGER --}}
+                                                <flux:modal.trigger :name="'view-ticket-' . $ticket->id">
+                                                    <flux:menu.item icon="eye">View</flux:menu.item>
+                                                </flux:modal.trigger>
 
-                                            <flux:menu.item icon="ticket"
-                                                href="{{ route('client.trip-ticket.ticket', $ticket->id) }}">
-                                                Trip Ticket
-                                            </flux:menu.item>
+                                                <flux:menu.item icon="ticket"
+                                                    href="{{ route('client.trip-ticket.ticket', $ticket->id) }}">
+                                                    Trip Ticket
+                                                </flux:menu.item>
 
-                                            <flux:menu.item icon="document-text"
-                                                href="{{ route('client.trip-ticket.travel-order.show', $ticket->id) }}">
-                                                Travel Order
-                                            </flux:menu.item>
+                                                <flux:menu.item icon="document-text"
+                                                    href="{{ route('client.trip-ticket.travel-order.show', $ticket->id) }}">
+                                                    Travel Order
+                                                </flux:menu.item>
 
-                                            <flux:menu.separator />
+                                                <flux:menu.separator />
 
-                                            {{-- DELETE TRIGGER --}}
-                                            <flux:modal.trigger :name="'delete-ticket-' . $ticket->id">
-                                                <flux:menu.item variant="danger" icon="trash">Delete</flux:menu.item>
-                                            </flux:modal.trigger>
-                                        </flux:menu>
-                                    </flux:dropdown>
+                                                {{-- DELETE TRIGGER --}}
+                                                <flux:modal.trigger :name="'delete-ticket-' . $ticket->id">
+                                                    <flux:menu.item variant="danger" icon="trash">Delete</flux:menu.item>
+                                                </flux:modal.trigger>
+                                            </flux:menu>
+                                        </flux:dropdown>
+                                    </div>
                                 </flux:table.cell>
                             </flux:table.row>
                         @empty

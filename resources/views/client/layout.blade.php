@@ -38,14 +38,14 @@
                 Trips
             </flux:navbar.item>
 
-            <flux:navbar.item icon="ticket" href="{{ route('client.tt-print') }}"
+            {{-- <flux:navbar.item icon="ticket" href="{{ route('client.tt-print') }}"
                 :current="request()->routeIs('client.tt-print')">
                 Trip Ticket
-            </flux:navbar.item>
+            </flux:navbar.item> --}}
 
             <flux:navbar.item icon="document-text" href="{{ route('client.to-print') }}"
                 :current="request()->routeIs('client.to-print')">
-                Travel Order
+                National TO
             </flux:navbar.item>
 
             @php
