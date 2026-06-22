@@ -124,7 +124,7 @@
                             const el = $refs.destination;
                             isTruncated = el.scrollWidth > el.clientWidth;
                         })"
-                            class="group flex items-center rounded-lg w-full">
+                            class="group flex items-center justify-between rounded-lg w-full">
 
                             <flux:modal.trigger name="details-{{ $trip->id }}">
                                 <div class="flex items-center gap-3 min-w-0"
@@ -149,15 +149,12 @@
                                 <flux:icon.check-circle variant="solid" class="size-5 text-emerald-500" />
                             </div>
 
-                            <flux:modal name="details-{{ $trip->id }}" class="min-w-[22rem]">
+                            {{-- <flux:modal name="details-{{ $trip->id }}" class="min-w-[22rem]">
                                 <div class="space-y-6">
                                     <flux:heading size="lg">Destination Details</flux:heading>
                                     <flux:text>{{ $trip->destination }}</flux:text>
-                                    {{-- <flux:modal.close>
-                                        <flux:button variant="ghost">Close</flux:button>
-                                    </flux:modal.close> --}}
                                 </div>
-                            </flux:modal>
+                            </flux:modal> --}}
                         </div>
                         @if (!$loop->last)
                             <flux:separator variant="subtle" />

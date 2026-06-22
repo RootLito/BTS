@@ -9,6 +9,7 @@ use App\Http\Controllers\TripTicketController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TravelOrderController;
 use App\Http\Controllers\ToReportController;
+use App\Http\Controllers\NationalToController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
@@ -129,6 +130,12 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::delete('/to-report/{id}', [ToReportController::class, 'destroy'])->name('to-report.destroy');
     Route::get('/to-report/export', [ToReportController::class, 'export'])->name('to-report.export');
 
+
+    Route::get('/national-to', [NationalToController::class, 'index'])->name('client.national-to');
+    Route::post('/national-to', [NationalToController::class, 'store'])->name('client.national-to.store');
+    Route::get('/national-to/{id}', [NationalToController::class, 'show'])->name('client.national-to.show');
+    Route::put('/national-to/{id}', [NationalToController::class, 'update'])->name('client.national-to.update');
+    Route::delete('/national-to/{id}', [NationalToController::class, 'destroy'])->name('client.national-to.destroy');
 
     Route::get('/trip-history', function () {
         return view('client.trip-history');

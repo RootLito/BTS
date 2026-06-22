@@ -43,10 +43,16 @@
                 Trip Ticket
             </flux:navbar.item> --}}
 
-            <flux:navbar.item icon="document-text" href="{{ route('client.to-print') }}"
+            {{-- <flux:navbar.item icon="document-text" href="{{ route('client.to-print') }}"
                 :current="request()->routeIs('client.to-print')">
                 National TO
+            </flux:navbar.item> --}}
+
+            <flux:navbar.item icon="document-text" href="{{ route('client.national-to') }}"
+                :current="request()->routeIs('client.national-to*')">
+                National TO
             </flux:navbar.item>
+
 
             @php
                 $userOffice = auth()->user()->office;

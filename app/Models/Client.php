@@ -31,4 +31,8 @@ class Client extends Authenticatable
     {
         return $this->hasMany(DocumentTracking::class);
     }
+    public function nationalTos(): HasMany
+    {
+        return $this->hasMany(NationalTo::class, 'client_id');
+    }
 }
