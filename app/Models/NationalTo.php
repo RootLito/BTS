@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 class NationalTo extends Model
 {
@@ -13,7 +15,7 @@ class NationalTo extends Model
     protected $table = 'national_to';
 
     protected $fillable = [
-        'client_id', 
+        'client_id',
         'to_no',
         'date',
         'personnel',
@@ -35,5 +37,10 @@ class NationalTo extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    public function documentTrackings(): HasMany
+    {
+        return $this->hasMany(DocumentTracking::class, 'national_to_id');
     }
 }

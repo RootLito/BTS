@@ -194,12 +194,13 @@
                 <div class="md:col-span-2">
                     <flux:input label="Route / Destination" name="route" required placeholder="Ex: Davao-Manila-Davao" />
                 </div>
+                <flux:input type="date" label="Departure Date" name="departure" required />
+                <flux:input type="date" label="Return Date" name="return_date" required />
                 <div class="md:col-span-2">
                     <flux:textarea label="Purpose of Travel" name="purpose" rows="3" required
                         placeholder="State objective clearly..." />
                 </div>
-                <flux:input type="date" label="Departure Date" name="departure" required />
-                <flux:input type="date" label="Return Date" name="return_date" required />
+
             </div>
 
             <flux:separator />

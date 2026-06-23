@@ -22,7 +22,7 @@
                                 <div class="relative inline-flex items-center gap-2">
                                     {{ $doc->document_no }}
 
-                                    @if (empty($doc->tripTicket->to_no) && $doc->route_from !== auth()->user()->office)
+                                    @if ($doc->is_new)
                                         <span class="flex h-2 w-2 relative">
                                             <span
                                                 class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -35,10 +35,17 @@
                             <flux:table.cell>
                                 <div class="flex flex-col">
                                     <span class="font-medium text-zinc-800 dark:text-white">
-                                        {{ $doc->tripTicket->destination ?? 'No Destination' }}
+                                        @if ($doc->is_national)
+                                            <span
+                                                class="text-xs font-semibold px-1.5 py-0.5 rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 mr-1">National
+                                                TO</span>
+                                            {{ $doc->nationalTo->route ?? 'No Destination' }}
+                                        @else
+                                            {{ $doc->tripTicket->destination ?? 'No Destination' }}
+                                        @endif
                                     </span>
                                     <span class="text-xs text-zinc-500 truncate max-w-[300px]">
-                                        {{ $doc->tripTicket->purpose ?? 'No purpose specified' }}
+                                        {{ $doc->is_national ? $doc->nationalTo->purpose ?? 'No purpose specified' : $doc->tripTicket->purpose ?? 'No purpose specified' }}
                                     </span>
                                 </div>
                             </flux:table.cell>
@@ -52,23 +59,31 @@
                             </flux:table.cell>
 
                             <flux:table.cell class="text-right">
-                                <flux:button href="{{ route('client.document-tracking.show', $doc->trip_ticket_id) }}"
-                                    icon="eye" size="xs" variant="filled">
-                                    View Details
-                                </flux:button>
+                                @if ($doc->is_national)
+                                    <flux:button href="{{ route('client.document-tracking.show', $doc->national_to_id) }}"
+                                        icon="eye" size="xs" variant="filled">
+                                        View Details
+                                    </flux:button>
+                                @else
+                                    <flux:button
+                                        href="{{ route('client.document-tracking.show', $doc->trip_ticket_id ?? ($doc->national_to_id ?? 0)) }}"
+                                        icon="eye" size="xs" variant="filled">
+                                        View Details
+                                    </flux:button>
+                                @endif
                             </flux:table.cell>
-                            </flux:row>
-                        @empty
-                            <flux:table.row>
-                                <flux:table.cell colspan="5" class="py-12 text-center">
-                                    <div class="flex flex-col items-center justify-center space-y-2">
-                                        <flux:icon name="document-text" class="size-8 text-zinc-400" />
-                                        <flux:text variant="strong" class="text-zinc-500">No active documents</flux:text>
-                                        <flux:text size="sm" class="text-zinc-400">No active documents are currently
-                                            routed to your office.</flux:text>
-                                    </div>
-                                </flux:table.cell>
-                            </flux:table.row>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="5" class="py-12 text-center">
+                                <div class="flex flex-col items-center justify-center space-y-2">
+                                    <flux:icon name="document-text" class="size-8 text-zinc-400" />
+                                    <flux:text variant="strong" class="text-zinc-500">No active documents</flux:text>
+                                    <flux:text size="sm" class="text-zinc-400">No active documents are currently routed
+                                        to your office.</flux:text>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
                     @endforelse
                 </flux:table.rows>
             </flux:table>

@@ -24,41 +24,48 @@
             return lines;
         }
     }">
-        <div class="fixed inset-0 top-[65px] overflow-y-auto print:static print:overflow-visible">
+        <div class="fixed inset-0 top-[65px] overflow-y-auto">
 
-            {{-- Action Buttons & Status Banners --}}
-            <div class="w-[8.5in] mx-auto my-4 print:hidden">
+            <div class="w-[8.5in] h-10 mx-auto my-4 flex justify-between items-center print:hidden">
+                <div class="flex gap-2 items-center">
+                    <flux:button icon="arrow-uturn-left" variant="filled" color="red"
+                        href="{{ route('client.national-to') }}">
+                        Back
+                    </flux:button>
 
-                {{-- Laravel standard Flash Success/Error Messages --}}
-                @if (session('success'))
-                    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" x-transition.duration.500ms
-                        class="mb-4 p-4 text-sm text-green-800 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-950">
-                        {{ session('success') }}
+                    <div class="flex flex-col">
+                        @if ($latestTracking && $latestTracking->status === 'Released' && !is_null($latestTracking->date_released))
+                            <div class="flex items-center gap-1.5 text-sky-600 font-medium text-sm">
+                                <flux:icon name="check-circle" variant="solid" class="w-4 h-4 text-sky-600" />
+                                <span>Forwarded</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+                                <flux:icon name="calendar" variant="solid" class="w-3.5 h-3.5 text-zinc-400" />
+                                <span
+                                    class="text-xs">{{ \Carbon\Carbon::parse($latestTracking->date_released)->format('M d, Y h:i a') }}</span>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-1.5 text-amber-600 font-medium text-sm">
+                                <flux:icon name="exclamation-triangle" variant="solid" class="w-4 h-4 text-amber-500" />
+                                <span>Not Forwarded</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-sm text-zinc-400 dark:text-zinc-500 mt-0.5">
+                                <flux:icon name="calendar" variant="solid" class="w-3.5 h-3.5 text-zinc-400/70" />
+                                <span class="text-xs">Pending...</span>
+                            </div>
+                        @endif
                     </div>
-                @endif
+                </div>
 
-                @if ($errors->any())
-                    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" x-transition.duration.500ms
-                        class="mb-4 p-4 text-sm text-red-800 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-950">
-                        <ul class="list-disc pl-5">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <div class="flex justify-between items-center w-full">
-                    <div>
-                        <flux:heading size="xl" level="1">National Travel Order</flux:heading>
-                    </div>
-                    <div>
-                        <flux:modal.trigger name="travel-order-info">
-                            <flux:button icon="document-text" variant="primary" color="sky">Update Info</flux:button>
-                        </flux:modal.trigger>
-                        <flux:button icon="printer" variant="primary" color="emerald" onclick="window.print()">Print
-                        </flux:button>
-                    </div>
+                <div class="flex gap-2">
+                    <flux:modal.trigger name="forward-document-modal">
+                        <flux:button icon="arrows-right-left" variant="primary" color="amber">Forward</flux:button>
+                    </flux:modal.trigger>
+                    <flux:modal.trigger name="travel-order-info">
+                        <flux:button icon="document-text" variant="primary" color="sky">Update Info</flux:button>
+                    </flux:modal.trigger>
+                    <flux:button icon="printer" variant="primary" color="emerald" onclick="window.print()">Print
+                    </flux:button>
                 </div>
             </div>
 
@@ -107,7 +114,6 @@
                                     if (!form.departure) return '';
                                     let start = new Date(form.departure);
                                     let end = form.return_date ? new Date(form.return_date) : start;
-                                    let options = { month: 'long', year: 'numeric' };
                                     
                                     if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
                                         let monthYear = start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).split(' ');
@@ -205,13 +211,57 @@
             </div>
         </div>
 
-        {{-- MODAL SECTION CONVERTED TO TRADITIONAL FORM SUBMISSION --}}
+        {{-- FORWARD DOCUMENT MODAL --}}
+        <flux:modal name="forward-document-modal" class="md:w-[500px]">
+            <form action="{{ route('client.national-to.track', $travelOrder->id) }}" method="POST"
+                class="space-y-6 w-full">
+                @csrf
+                <div>
+                    <flux:heading size="lg">Track Document</flux:heading>
+                </div>
+
+                <flux:input label="Document Number" name="document_no" required />
+
+                <div class="w-full flex flex-col gap-2">
+                    <flux:label>Forwarded to</flux:label>
+                    <input type="hidden" name="route" id="forward_to_input" required>
+                    <flux:dropdown class="w-full">
+                        <flux:button id="office_dropdown_button" icon-trailing="chevron-down"
+                            class="w-full [&>svg]:ml-auto" align="start">
+                            Select recipient...
+                        </flux:button>
+
+                        <flux:menu class="max-h-60 overflow-y-auto">
+                            @foreach ($offices as $office)
+                                <flux:menu.item
+                                    onclick="
+                                    document.getElementById('forward_to_input').value = '{{ $office }}';
+                                    document.getElementById('office_dropdown_button').innerText = '{{ $office }}';
+                                ">
+                                    {{ $office }}
+                                </flux:menu.item>
+                            @endforeach
+                        </flux:menu>
+                    </flux:dropdown>
+                </div>
+
+                <flux:textarea label="Remarks" name="remarks" rows="4" placeholder="Add remarks here..." />
+
+                <div class="flex gap-2 justify-end">
+                    <flux:modal.close>
+                        <flux:button variant="ghost" type="button">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:button variant="primary" color="emerald" type="submit">Forward</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        {{-- UPDATE DETAILS MODAL --}}
         <flux:modal name="travel-order-info" class="md:w-[700px]">
             <form action="{{ route('client.national-to.update', $travelOrder->id) }}" method="POST" class="space-y-6">
                 @csrf
                 @method('PUT')
 
-                {{-- Hidden Input elements sending your AlpineJS reactive object fields back to Laravel backend --}}
                 <input type="hidden" name="to_no" x-bind:value="form.to_no">
                 <input type="hidden" name="date" x-bind:value="form.date">
                 <input type="hidden" name="route" x-bind:value="form.route">
@@ -220,8 +270,6 @@
                 <input type="hidden" name="purpose" x-bind:value="form.purpose">
                 <input type="hidden" name="rd" x-bind:value="form.rd">
                 <input type="hidden" name="oic" x-bind:value="form.oic">
-
-                {{-- To submit arrays like dynamic personnel via traditional forms, we build hidden JSON --}}
                 <input type="hidden" name="personnel" :value="JSON.stringify(form.personnel)">
 
                 <div>

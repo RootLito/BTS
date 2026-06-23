@@ -75,12 +75,12 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
 // --- CLIENT PROTECTED ROUTES ---
 Route::middleware(['auth:client'])->prefix('client')->group(function () {
 
-    Route::get('/tt-print', function () {
-        return view('client.tt-print');
-    })->name('client.tt-print');
-    Route::get('/to-print', function () {
-        return view('client.to-print');
-    })->name('client.to-print');
+    // Route::get('/tt-print', function () {
+    //     return view('client.tt-print');
+    // })->name('client.tt-print');
+    // Route::get('/to-print', function () {
+    //     return view('client.to-print');
+    // })->name('client.to-print');
 
 
     Route::get('/profile', function () {
@@ -109,20 +109,20 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
 
 
 
-    Route::get('/trip-ticket/travel-order/{tripTicket}', [TravelOrderController::class, 'show'])
-        ->name('client.trip-ticket.travel-order.show');
-    Route::patch('/trip-ticket/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])
-        ->name('client.trip-ticket.travel-order.store');
-    Route::post('/trip-ticket/travel-order/{tripTicket}/track', [TravelOrderController::class, 'track'])
-        ->name('client.trip-ticket.travel-order.track');
+    Route::get('/trip-ticket/travel-order/{tripTicket}', [TravelOrderController::class, 'show'])->name('client.trip-ticket.travel-order.show');
+    Route::patch('/trip-ticket/travel-order/{tripTicket}', [TravelOrderController::class, 'store'])->name('client.trip-ticket.travel-order.store');
+    Route::post('/trip-ticket/travel-order/{tripTicket}/track', [TravelOrderController::class, 'track'])->name('client.trip-ticket.travel-order.track');
 
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'clientRead'])->name('client.notification.read');
 
     Route::get('/document-tracking', [TravelOrderController::class, 'index'])->name('client.document-tracking');
-    Route::get('/document-tracking/{tripTicket}', [TravelOrderController::class, 'showTracking'])->name('client.document-tracking.show');
+    // Route::get('/document-tracking/{tripTicket}', [TravelOrderController::class, 'showTracking'])->name('client.document-tracking.show');
+    Route::get('/document-tracking/{id}', [TravelOrderController::class, 'showTracking'])->name('client.document-tracking.show');
     Route::post('/document-tracking/{tripTicket}/track', [TravelOrderController::class, 'track'])->name('client.document-tracking.track');
     Route::post('/document-tracking/{tripTicket}/receive', [TravelOrderController::class, 'receive'])->name('client.document-tracking.receive');
     Route::delete('/document-tracking/{id}', [TravelOrderController::class, 'destroy'])->name('client.document-tracking.destroy');
+    Route::post('/client/document-tracking/{id}/cancel', [TravelOrderController::class, 'cancel'])
+        ->name('client.document-tracking.cancel');
 
     Route::get('/to-report', [ToReportController::class, 'index'])->name('client.to-report');
     Route::post('/to-report', [ToReportController::class, 'store'])->name('to-report.store');
@@ -137,7 +137,6 @@ Route::middleware(['auth:client'])->prefix('client')->group(function () {
     Route::put('/national-to/{id}', [NationalToController::class, 'update'])->name('client.national-to.update');
     Route::delete('/national-to/{id}', [NationalToController::class, 'destroy'])->name('client.national-to.destroy');
 
-    Route::get('/trip-history', function () {
-        return view('client.trip-history');
-    })->name('client.trip-history');
+    Route::post('/national-to/{id}/track', [NationalToController::class, 'track'])->name('client.national-to.track');
+
 });

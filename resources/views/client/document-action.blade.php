@@ -2,7 +2,8 @@
 
 @section('content')
     <div class="flex flex-col gap-6 w-full overflow-y-auto">
-        <flux:button icon="arrow-uturn-left" variant="filled" color="red" href="{{ route('client.document-tracking') }}" class="w-32 mt-2">
+        <flux:button icon="arrow-uturn-left" variant="filled" color="red" href="{{ route('client.document-tracking') }}"
+            class="w-32 mt-2">
             Back
         </flux:button>
 
@@ -20,46 +21,76 @@
                     <div class="flex items-baseline">
                         <flux:label class="w-52 shrink-0 whitespace-nowrap">Date</flux:label>
                         <p class="text-sm text-zinc-700 dark:text-zinc-300">
-                            {{ $tripTicket->created_at ? $tripTicket->created_at->format('M j, Y') : 'N/A' }}
+                            @if ($isNational)
+                                {{ $nationalTo?->created_at ? $nationalTo->created_at->format('M j, Y') : 'N/A' }}
+                            @else
+                                {{ $tripTicket?->created_at ? $tripTicket->created_at->format('M j, Y') : 'N/A' }}
+                            @endif
                         </p>
                     </div>
                     <div class="flex items-baseline">
-                        <flux:label class="w-52 shrink-0 whitespace-nowrap">Name</flux:label>
+                        <flux:label class="w-52 shrink-0 whitespace-nowrap">Name / Personnel</flux:label>
                         <div class="flex flex-wrap gap-3 text-sm text-zinc-700 dark:text-zinc-300 font-medium">
-                            @if (is_array($tripTicket->passengers))
-                                @foreach ($tripTicket->passengers as $passenger)
+                            @if ($isNational)
+                                @if (is_array($nationalTo?->personnel))
+                                    @foreach ($nationalTo->personnel as $person)
+                                        <span
+                                            class="inline-flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded">
+                                            <flux:icon.user variant="micro" class="text-zinc-400 dark:text-zinc-500" />
+                                            <span>
+                                                {{ $person['name'] ?? 'Unknown' }}
+                                                @if (!empty($person['position']))
+                                                    <span
+                                                        class="text-xs text-zinc-400 dark:text-zinc-500 font-normal">({{ $person['position'] }})</span>
+                                                @endif
+                                            </span>
+                                        </span>
+                                    @endforeach
+                                @else
+                                    <span class="text-zinc-400 dark:text-zinc-500">N/A</span>
+                                @endif
+                            @else
+                                @if ($tripTicket && is_array($tripTicket->passengers))
+                                    @foreach ($tripTicket->passengers as $passenger)
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <flux:icon.user variant="micro" class="text-zinc-400 dark:text-zinc-500" />
+                                            {{ $passenger }}
+                                        </span>
+                                    @endforeach
+                                @elseif ($tripTicket && !empty($tripTicket->passengers))
                                     <span class="inline-flex items-center gap-1.5">
                                         <flux:icon.user variant="micro" class="text-zinc-400 dark:text-zinc-500" />
-                                        {{ $passenger }}
+                                        {{ $tripTicket->passengers }}
                                     </span>
-                                @endforeach
-                            @elseif (!empty($tripTicket->passengers))
-                                <span class="inline-flex items-center gap-1.5">
-                                    <flux:icon.user variant="micro" class="text-zinc-400 dark:text-zinc-500" />
-                                    {{ $tripTicket->passengers }}
-                                </span>
-                            @else
-                                <span class="text-zinc-400 dark:text-zinc-500">N/A</span>
+                                @else
+                                    <span class="text-zinc-400 dark:text-zinc-500">N/A</span>
+                                @endif
                             @endif
                         </div>
                     </div>
                     <div class="flex items-baseline">
                         <flux:label class="w-52 shrink-0 whitespace-nowrap">Inclusive Dates</flux:label>
                         <p class="text-sm text-zinc-700 dark:text-zinc-300">
-                            {{ $tripTicket->start_date ? $tripTicket->start_date->format('M j, Y') : 'N/A' }} —
-                            {{ $tripTicket->end_date ? $tripTicket->end_date->format('M j, Y') : 'N/A' }}
+                            @if ($isNational)
+                                {{ $nationalTo?->departure ? $nationalTo->departure->format('M j, Y') : 'N/A' }} —
+                                {{ $nationalTo?->return_date ? $nationalTo->return_date->format('M j, Y') : 'N/A' }}
+                            @else
+                                {{ $tripTicket?->start_date ? $tripTicket->start_date->format('M j, Y') : 'N/A' }} —
+                                {{ $tripTicket?->end_date ? $tripTicket->end_date->format('M j, Y') : 'N/A' }}
+                            @endif
                         </p>
                     </div>
                     <div class="flex items-baseline">
-                        <flux:label class="w-52 shrink-0 whitespace-nowrap">Destination</flux:label>
+                        <flux:label class="w-52 shrink-0 whitespace-nowrap">Destination / Route</flux:label>
                         <p class="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
-                            {{ $tripTicket->destination ?? 'N/A' }}
+                            {{ $isNational ? $nationalTo?->route ?? 'N/A' : $tripTicket?->destination ?? 'N/A' }}
                         </p>
                     </div>
+
                     <div class="flex items-baseline">
                         <flux:label class="w-52 shrink-0 whitespace-nowrap">Purpose</flux:label>
                         <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ $tripTicket->purpose ?? 'No purpose specified.' }}
+                            {{ $isNational ? $nationalTo?->purpose ?? 'No purpose specified.' : $tripTicket?->purpose ?? 'No purpose specified.' }}
                         </p>
                     </div>
                 </div>
@@ -81,12 +112,16 @@
                             <flux:text size="sm">Manage incoming acceptances or dispatch items onward to neighboring
                                 business departments.</flux:text>
                         </div>
-                        @if ($tripTicket->to_no)
+                        @if (!$isNational && $tripTicket?->to_no)
                             <flux:button disabled variant="filled" icon="check-circle">
                                 TO GENERATED ({{ $tripTicket->to_no }})
                             </flux:button>
+                        @elseif ($isNational)
+                            <flux:button disabled variant="filled" icon="globe-alt">
+                                NATIONAL TO TIMELINE
+                            </flux:button>
                         @else
-                            <form action="{{ route('trip-tickets.generate-to', $tripTicket->id) }}" method="POST">
+                            <form action="{{ route('trip-tickets.generate-to', $tripTicket?->id ?? 0) }}" method="POST">
                                 @csrf
                                 <flux:button type="submit" variant="primary" color="emerald" icon="document-text">
                                     Generate TO
@@ -102,7 +137,9 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3 pt-2">
-                        @if ($tripTicket->client_id !== auth()->id())
+                        @if (
+                            ($isNational && $nationalTo?->client_id !== auth()->id()) ||
+                                (!$isNational && $tripTicket?->client_id !== auth()->id()))
                             @php
                                 $latestLog = $trackings->first();
                                 $isSenderPending =
@@ -115,16 +152,52 @@
                                     $latestLog->client_id == auth()->id();
 
                                 $cannotReceive = $isSenderPending || $isAlreadyReceivedByUs;
+                                $targetId = $isNational ? $nationalTo?->id : $tripTicket?->id;
                             @endphp
 
-                            <form action="{{ route('client.document-tracking.receive', $tripTicket->id) }}" method="POST">
+                            @php
+                                $userOffice = is_object(auth()->user()->office)
+                                    ? auth()->user()->office->name
+                                    : auth()->user()->office;
+
+                                $latestLog = $trackings->first();
+
+                                // 1. Did our office forward this document last?
+                                $isSenderPending =
+                                    $latestLog &&
+                                    $latestLog->status === 'Released' &&
+                                    $latestLog->route_from === $userOffice;
+
+                                // 2. Has our office already received it, and no one has forwarded it yet?
+                                $isAlreadyReceivedByUs =
+                                    $latestLog &&
+                                    $latestLog->status === 'Received' &&
+                                    ($latestLog->route_to === $userOffice ||
+                                        $trackings
+                                            ->where('route_from', $userOffice)
+                                            ->where('status', 'Received')
+                                            ->isNotEmpty());
+
+                                // 3. Is this document explicitly heading to our office right now?
+                                $isIncomingToUs =
+                                    $latestLog &&
+                                    $latestLog->status === 'Released' &&
+                                    $latestLog->route_to === $userOffice;
+
+                                // Gray out the button if we aren't the ones who are supposed to receive it right now
+                                $cannotReceive = !$isIncomingToUs || $isSenderPending || $isAlreadyReceivedByUs;
+                            @endphp
+
+                            <form action="{{ route('client.document-tracking.receive', $targetId ?? 0) }}" method="POST">
                                 @csrf
                                 <flux:button type="submit" variant="filled" color="emerald" icon="check-circle"
                                     :disabled="$cannotReceive">
                                     @if ($isSenderPending)
                                         Document Forwarded
-                                    @elseif($isAlreadyReceivedByUs)
+                                    @elseif ($isAlreadyReceivedByUs)
                                         Document Received
+                                    @elseif (!$isIncomingToUs && $latestLog && $latestLog->route_from !== $userOffice)
+                                        In Transit (At {{ $latestLog->route_to ?? 'Other Office' }})
                                     @else
                                         Receive Document
                                     @endif
@@ -132,8 +205,9 @@
                             </form>
                         @endif
 
-                        <form action="{{ route('client.document-tracking.track', $tripTicket->id) }}" method="POST"
-                            class="flex flex-wrap items-end gap-3 w-full sm:w-auto">
+                        <form
+                            action="{{ route('client.document-tracking.track', ($isNational ? $nationalTo?->id : $tripTicket?->id) ?? 0) }}"
+                            method="POST" class="flex items-end gap-3 w-full">
                             @csrf
                             <input type="hidden" name="document_no"
                                 value="{{ $documentNo === 'N/A' ? '' : $documentNo }}">
@@ -142,7 +216,8 @@
                             <div class="w-56">
                                 <flux:dropdown class="w-full">
                                     <flux:button id="office_dropdown_button" icon-trailing="chevron-down"
-                                        class="w-full [&>svg]:ml-auto text-left justify-between">
+                                        class="w-full [&>svg]:ml-auto text-left justify-between"
+                                        :disabled="$trackings->first()?->status === 'Cancelled'">
                                         Forwarded to...
                                     </flux:button>
                                     <flux:menu class="max-h-60 overflow-y-auto">
@@ -156,17 +231,26 @@
                                 </flux:dropdown>
                             </div>
 
-                            <div class="flex-1 min-w-[250px]">
-                                <flux:input name="remarks" placeholder="Remarks..." />
+                            <div class="w-72">
+                                <flux:input name="remarks" placeholder="Remarks..."
+                                    :disabled="$trackings->first()?->status === 'Cancelled'" />
                             </div>
 
-                            <flux:button type="submit" variant="primary" color="emerald" icon="paper-airplane">
+                            <flux:button type="submit" variant="primary" color="emerald" icon="paper-airplane"
+                                :disabled="$trackings->first()?->status === 'Cancelled'">
                                 Forward
                             </flux:button>
+
+
+                            <flux:modal.trigger name="cancel-document-modal">
+                                <flux:button type="button" variant="danger" icon="x-circle" class="ms-auto"
+                                    :disabled="$trackings->first()?->status === 'Cancelled'">
+                                    {{ $trackings->first()?->status === 'Cancelled' ? 'Cancelled' : 'Cancel' }}
+                                </flux:button>
+                            </flux:modal.trigger>
                         </form>
                     </div>
                 @endif
-
 
                 <flux:table>
                     <flux:table.columns>
@@ -184,9 +268,11 @@
                             <flux:table.row>
                                 <flux:table.cell>
                                     <span
-                                        class="px-2 py-1 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                        {{ $track->status }}
-                                    </span>
+                                        class="px-2 py-1 rounded text-xs font-semibold 
+                                        {{ $track->status === 'Cancelled'
+                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                            : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' }}
+                                    ">{{ $track->status }}</span>
                                 </flux:table.cell>
 
                                 <flux:table.cell class="text-zinc-700 dark:text-zinc-300 text-xs font-medium">
@@ -252,4 +338,29 @@
             </flux:card>
         </div>
     </div>
+    <flux:modal name="cancel-document-modal" class="min-w-[24rem]">
+        <form action="{{ route('client.document-tracking.cancel', $isNational ? $nationalTo->id : $tripTicket->id) }}"
+            method="POST" class="m-0">
+            @csrf
+            <input type="hidden" name="is_national" value="{{ $isNational ? '1' : '0' }}">
+
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Cancel Travel Request?</flux:heading>
+                    <flux:text class="mt-2">
+                        Are you sure you want to change the status of this document to <strong>Cancelled</strong>?<br>
+                        This will append a cancellation record to the system tracking trail.
+                    </flux:text>
+                </div>
+
+                <div class="flex gap-2">
+                    <flux:spacer />
+                    <flux:modal.close>
+                        <flux:button variant="ghost">No, Keep it</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="danger" icon="x-circle">Yes, Cancel Document</flux:button>
+                </div>
+            </div>
+        </form>
+    </flux:modal>
 @endsection

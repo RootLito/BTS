@@ -2,26 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\NationalTo;
+use App\Models\Client;
+use App\Models\DocumentTracking; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NationalToController extends Controller
 {
-    /**
-     * Display a listing of the national travel orders for the logged-in client.
-     */
     public function index()
     {
         $travelOrders = Auth::guard('client')->user()->nationalTos()->latest()->get();
-
-        // Return to your view with the data
         return view('client.national-to', compact('travelOrders'));
     }
 
-    /**
-     * Store a newly created travel order in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -47,38 +40,65 @@ class NationalToController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified travel order.
-     */
     public function show($id)
     {
         $travelOrder = Auth::guard('client')->user()->nationalTos()->findOrFail($id);
 
-        // 1. Fix the double-encoded personnel string
         if (is_string($travelOrder->personnel)) {
             $decoded = json_decode($travelOrder->personnel, true);
-            // If it successfully decodes into an array, assign it back
             $travelOrder->personnel = is_array($decoded) ? $decoded : [['name' => '', 'position' => '']];
         }
 
-        // 2. Format Carbon instances to YYYY-MM-DD strings for Flux date inputs
         $travelOrder->date = $travelOrder->date ? $travelOrder->date->format('Y-m-d') : '';
         $travelOrder->departure = $travelOrder->departure ? $travelOrder->departure->format('Y-m-d') : '';
         $travelOrder->return_date = $travelOrder->return_date ? $travelOrder->return_date->format('Y-m-d') : '';
 
-        return view('client.to-print', compact('travelOrder'));
+        $offices = Client::whereNotNull('office')
+        ->where('office', '!=', '')
+        ->distinct()
+        ->pluck('office')
+        ->toArray();
+
+        $latestTracking = DocumentTracking::where('national_to_id', $travelOrder->id)
+            ->latest()
+            ->first();
+
+        return view('client.to-print', compact('travelOrder', 'offices', 'latestTracking'));
     }
 
-    /**
-     * Update the specified travel order in storage.
-     */
+    public function track(Request $request, $id)
+    {
+        $travelOrder = Auth::guard('client')->user()->nationalTos()->findOrFail($id);
+
+        $request->validate([
+            'document_no' => 'required|string',
+            'route' => 'required|string', 
+            'remarks' => 'nullable|string',
+        ]);
+
+        DocumentTracking::create([
+            'national_to_id' => $travelOrder->id,
+            'trip_ticket_id' => null,
+            'is_national' => true,
+            'client_id' => Auth::guard('client')->id(),
+            'document_no' => $request->document_no,
+            'route_from' => 'Client Office', 
+            'route_to' => $request->route,
+            'status' => 'Released',
+            'date_released' => now(),
+            'date_received' => null,
+            'remarks' => $request->remarks,
+        ]);
+
+        return back()->with('success', 'Document forwarded successfully!');
+    }
+
     public function update(Request $request, $id)
     {
         $travelOrder = Auth::guard('client')->user()->nationalTos()->findOrFail($id);
 
         if ($request->has('personnel') && is_string($request->input('personnel'))) {
             $decodedPersonnel = json_decode($request->input('personnel'), true);
-
             $request->merge(['personnel' => $decodedPersonnel]);
         }
 
@@ -98,13 +118,9 @@ class NationalToController extends Controller
 
         $travelOrder->update($validated);
 
-        return back()
-            ->with('success', 'National Travel Order updated successfully!');
+        return back()->with('success', 'National Travel Order updated successfully!');
     }
 
-    /**
-     * Remove the specified travel order from storage.
-     */
     public function destroy($id)
     {
         $travelOrder = Auth::guard('client')->user()->nationalTos()->findOrFail($id);
