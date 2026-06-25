@@ -194,6 +194,59 @@ class TravelOrderController extends Controller
     //     return view('client.document-tracking', compact('documents', 'offices'));
     // }
 
+    // public function index()
+    // {
+    //     $userOffice = auth()->user()->office;
+    //     $userId = auth()->id();
+
+    //     $documents = DocumentTracking::with(['tripTicket.notes', 'nationalTo'])
+    //         ->where(function ($query) use ($userOffice, $userId) {
+    //             $query->where('route_to', $userOffice)
+    //                 ->orWhere('route_from', $userOffice)
+    //                 ->orWhereHas('tripTicket', function ($q) use ($userId) {
+    //                     $q->where('client_id', $userId);
+    //                 })
+    //                 ->orWhereHas('nationalTo', function ($q) use ($userId) {
+    //                     $q->where('client_id', $userId);
+    //                 });
+    //         })
+    //         ->latest()
+    //         ->get();
+
+    //     $documents = $documents->unique(function ($item) {
+    //         return $item->is_national
+    //             ? 'national_' . $item->national_to_id
+    //             : 'trip_' . $item->trip_ticket_id;
+    //     })->values();
+
+    //     $receivedTrackings = DocumentTracking::where('status', 'Received')
+    //         ->where(function ($q) use ($userOffice) {
+    //             $q->where('route_from', $userOffice)
+    //                 ->orWhere('route_to', $userOffice);
+    //         })
+    //         ->get();
+
+    //     $receivedTicketIds = $receivedTrackings->pluck('trip_ticket_id')->filter()->toArray();
+    //     $receivedNationalIds = $receivedTrackings->pluck('national_to_id')->filter()->toArray();
+
+    //     $documents->transform(function ($doc) use ($receivedTicketIds, $receivedNationalIds, $userOffice) {
+    //         if ($doc->is_national) {
+    //             $doc->is_new = ($doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->national_to_id, $receivedNationalIds));
+    //         } else {
+    //             $doc->is_new = ($doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->trip_ticket_id, $receivedTicketIds));
+    //         }
+    //         return $doc;
+    //     });
+
+    //     $offices = Client::whereNotNull('office')
+    //         ->where('office', '!=', '')
+    //         ->pluck('office')
+    //         ->unique()
+    //         ->values();
+
+    //     return view('client.document-tracking', compact('documents', 'offices'));
+    // }
+
     public function index()
     {
         $userOffice = auth()->user()->office;
@@ -226,14 +279,20 @@ class TravelOrderController extends Controller
             })
             ->get();
 
+        $cancelledTrackings = DocumentTracking::where('status', 'Cancelled')->get();
+        $cancelledTicketIds = $cancelledTrackings->pluck('trip_ticket_id')->filter()->toArray();
+        $cancelledNationalIds = $cancelledTrackings->pluck('national_to_id')->filter()->toArray();
+
         $receivedTicketIds = $receivedTrackings->pluck('trip_ticket_id')->filter()->toArray();
         $receivedNationalIds = $receivedTrackings->pluck('national_to_id')->filter()->toArray();
 
-        $documents->transform(function ($doc) use ($receivedTicketIds, $receivedNationalIds, $userOffice) {
+        $documents->transform(function ($doc) use ($receivedTicketIds, $receivedNationalIds, $cancelledTicketIds, $cancelledNationalIds, $userOffice) {
             if ($doc->is_national) {
-                $doc->is_new = ($doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->national_to_id, $receivedNationalIds));
+                $isCancelled = in_array($doc->national_to_id, $cancelledNationalIds);
+                $doc->is_new = (!$isCancelled && $doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->national_to_id, $receivedNationalIds));
             } else {
-                $doc->is_new = ($doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->trip_ticket_id, $receivedTicketIds));
+                $isCancelled = in_array($doc->trip_ticket_id, $cancelledTicketIds);
+                $doc->is_new = (!$isCancelled && $doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->trip_ticket_id, $receivedTicketIds));
             }
             return $doc;
         });
@@ -463,7 +522,7 @@ class TravelOrderController extends Controller
 
             DocumentTracking::create([
                 'national_to_id' => $id,
-                'is_national' => $isNational, 
+                'is_national' => $isNational,
                 'client_id' => $currentClientId,
                 'document_no' => $lastGlobalTracking->document_no ?? '',
                 'route_from' => $userOffice,

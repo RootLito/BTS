@@ -13,10 +13,26 @@
     @endif
 
     <div class="mt-6 mb-4">
-        <div class="mt-6 mb-4">
+        <!-- Toggle Switch for Local vs National -->
+        <div class="mb-4 inline-flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+            <a href="{{ route('client.to-report', array_merge(request()->query(), ['type' => 'local'])) }}"
+                class="px-4 py-2 text-sm font-medium rounded-md transition-colors {{ $type === 'local' ? 'bg-white dark:bg-zinc-900 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
+                Local TO
+            </a>
+            <a href="{{ route('client.to-report', array_merge(request()->query(), ['type' => 'national'])) }}"
+                class="px-4 py-2 text-sm font-medium rounded-md transition-colors {{ $type === 'national' ? 'bg-white dark:bg-zinc-900 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
+                National TO
+            </a>
+        </div>
+
+        <div class="mb-4">
             <div class="flex items-center justify-between gap-2">
                 <!-- Filter Form Items wrapper -->
                 <form action="{{ route('client.to-report') }}" method="GET" class="flex flex-1 items-center gap-2">
+
+                    <!-- Preserve the Type on Form Submit -->
+                    <input type="hidden" name="type" value="{{ $type }}">
+
                     <!-- Search Input -->
                     <div class="w-full max-w-xs">
                         <flux:input name="search" value="{{ request('search') }}" icon="magnifying-glass"
@@ -98,8 +114,8 @@
                         <flux:button type="submit" variant="primary" color="emerald">Filter</flux:button>
 
                         @if (request()->anyFilled(['search', 'year', 'month']))
-                            <flux:button href="{{ route('client.to-report') }}" variant="filled" color="zinc"
-                                icon="x-mark">
+                            <flux:button href="{{ route('client.to-report', ['type' => $type]) }}" variant="filled"
+                                color="zinc" icon="x-mark">
                                 Clear
                             </flux:button>
                         @endif
@@ -128,32 +144,41 @@
                     </flux:table.columns>
 
                     <flux:table.rows>
-                        @forelse ($tripTickets as $ticket)
+                        @forelse ($tickets as $ticket)
                             <flux:table.row>
                                 <flux:table.cell class="font-semibold text-zinc-900 dark:text-zinc-100">
                                     {{ $ticket->to_no ?? '' }}
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    {{ $ticket->user->name ?? '' }}
+                                    @if ($type === 'national')
+                                        {{ is_array($ticket->personnel) ? implode(', ', $ticket->personnel) : $ticket->personnel }}
+                                    @else
+                                        {{ $ticket->user->name ?? '' }}
+                                    @endif
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    {{ $ticket->user->office ?? 'FAS' }}
+                                    {{ $type === 'national' ? $ticket->client->office ?? '' : $ticket->user->office ?? 'FAS' }}
                                 </flux:table.cell>
 
                                 <flux:table.cell class="text-zinc-500 dark:text-zinc-400 text-xs">
                                     <div class="flex items-center gap-2">
                                         <flux:icon name="calendar" class="size-4 text-zinc-400 shrink-0" />
                                         <span>
-                                            {{ $ticket->start_date?->format('M d, Y') }} -
-                                            {{ $ticket->end_date?->format('M d, Y') }}
+                                            @if ($type === 'national')
+                                                {{ $ticket->departure?->format('M d, Y') }} -
+                                                {{ $ticket->return_date?->format('M d, Y') }}
+                                            @else
+                                                {{ $ticket->start_date?->format('M d, Y') }} -
+                                                {{ $ticket->end_date?->format('M d, Y') }}
+                                            @endif
                                         </span>
                                     </div>
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    {{ $ticket->purpose ?? $ticket->destination }}
+                                    {{ $type === 'national' ? $ticket->purpose : $ticket->purpose ?? $ticket->destination }}
                                 </flux:table.cell>
 
                                 <flux:table.cell>
@@ -187,13 +212,18 @@
                     </flux:table.columns>
 
                     <flux:table.rows>
-                        @forelse ($tripTickets as $ticket)
+                        @forelse ($tickets as $ticket)
+                            @php
+                                $startDate = $type === 'national' ? $ticket->departure : $ticket->start_date;
+                                $endDate = $type === 'national' ? $ticket->return_date : $ticket->end_date;
+                                $destination = $type === 'national' ? $ticket->route : $ticket->destination;
+                            @endphp
                             <flux:table.row>
                                 <flux:table.cell class="font-bold text-zinc-800 dark:text-zinc-200">
                                     <div class="relative inline-flex items-center gap-2">
                                         {{ $ticket->to_no ?? '' }}
 
-                                        @if (empty($ticket->toReport) && $ticket->end_date?->isPast())
+                                        @if (empty($ticket->toReport) && $endDate?->isPast())
                                             <span class="flex h-2 w-2 relative">
                                                 <span
                                                     class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -204,21 +234,20 @@
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    {{ $ticket->destination }}
+                                    {{ $destination }}
                                 </flux:table.cell>
 
                                 <flux:table.cell class="text-zinc-500 dark:text-zinc-400">
                                     <div class="flex items-center gap-2">
                                         <flux:icon name="calendar" class="size-4 text-zinc-400 shrink-0" />
                                         <span>
-                                            {{ $ticket->start_date?->format('M d, Y') }} -
-                                            {{ $ticket->end_date?->format('M d, Y') }}
+                                            {{ $startDate?->format('M d, Y') }} - {{ $endDate?->format('M d, Y') }}
                                         </span>
                                     </div>
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    @if ($ticket->end_date && $ticket->end_date->isPast())
+                                    @if ($endDate && $endDate->isPast())
                                         <flux:badge color="emerald" size="sm" inset="top bottom">Completed</flux:badge>
                                     @else
                                         <flux:badge color="sky" size="sm" inset="top bottom">In Progress
@@ -255,7 +284,7 @@
                                                 </flux:button>
                                             </flux:modal.trigger>
                                         @else
-                                            @if ($ticket->end_date?->isPast())
+                                            @if ($endDate?->isPast())
                                                 <flux:modal.trigger name="create-report-modal-{{ $ticket->id }}">
                                                     <flux:button size="sm" variant="primary" color="emerald"
                                                         class="bg-emerald-600 hover:bg-emerald-700 text-white border-none"
@@ -276,7 +305,7 @@
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="5" class="py-12 text-center">
+                                <flux:table.cell colspan="6" class="py-12 text-center">
                                     <div class="flex flex-col items-center justify-center space-y-2">
                                         <flux:icon name="clipboard-document-check" class="size-8 text-zinc-400" />
                                         <flux:text variant="strong" class="text-zinc-500">No travel orders or trip tickets
@@ -294,11 +323,17 @@
         </flux:card>
 
         <div class="mt-4">
-            {{ $tripTickets->links() }}
+            {{ $tickets->links() }}
         </div>
     </div>
 
-    @foreach ($tripTickets as $ticket)
+    @foreach ($tickets as $ticket)
+        @php
+            $startDate = $type === 'national' ? $ticket->departure : $ticket->start_date;
+            $endDate = $type === 'national' ? $ticket->return_date : $ticket->end_date;
+            $destination = $type === 'national' ? $ticket->route : $ticket->destination;
+        @endphp
+
         @if ($ticket->toReport)
             <flux:modal name="edit-report-modal-{{ $ticket->id }}" class="md:w-[500px]">
                 <form action="{{ route('to-report.update', $ticket->toReport->id) }}" method="POST"
@@ -316,16 +351,15 @@
                             <flux:text size="sm" class="text-zinc-400 block uppercase tracking-wider font-semibold">
                                 Destination</flux:text>
                             <flux:text variant="strong" class="text-base text-zinc-900 dark:text-white mt-2">
-                                {{ $ticket->destination }}</flux:text>
+                                {{ $destination }}</flux:text>
                         </div>
                         <div class="flex items-center gap-2 mt-1 text-zinc-600 dark:text-zinc-300">
                             <flux:icon name="calendar" class="size-4 text-zinc-400" />
                             <flux:text size="sm" class="font-medium">
-                                {{ $ticket->start_date?->format('M d, Y') }} - {{ $ticket->end_date?->format('M d, Y') }}
+                                {{ $startDate?->format('M d, Y') }} - {{ $endDate?->format('M d, Y') }}
                             </flux:text>
                         </div>
                     </div>
-
 
                     <flux:text size="sm" class="text-zinc-400 block uppercase tracking-wider font-semibold mb-2">
                         HIGHLIGHT / OUTPUTS</flux:text>
@@ -355,7 +389,7 @@
                             <flux:heading size="lg">Delete Travel Report</flux:heading>
                             <flux:text class="mt-2 text-sm">
                                 Are you sure you want to delete the report for <strong
-                                    class="text-zinc-950 dark:text-white">{{ $ticket->destination }}</strong>? This action
+                                    class="text-zinc-950 dark:text-white">{{ $destination }}</strong>? This action
                                 cannot be undone.
                             </flux:text>
                         </div>
@@ -376,7 +410,13 @@
             <flux:modal name="create-report-modal-{{ $ticket->id }}" class="md:w-[500px]">
                 <form action="{{ route('to-report.store') }}" method="POST" class="space-y-6 m-0 p-0">
                     @csrf
-                    <input type="hidden" name="trip_ticket_id" value="{{ $ticket->id }}">
+
+                    <input type="hidden" name="type" value="{{ $type }}">
+                    @if ($type === 'local')
+                        <input type="hidden" name="trip_ticket_id" value="{{ $ticket->id }}">
+                    @else
+                        <input type="hidden" name="national_to_id" value="{{ $ticket->id }}">
+                    @endif
 
                     <div>
                         <flux:heading size="lg">Create Travel Report</flux:heading>
@@ -388,12 +428,12 @@
                             <flux:text size="sm" class="text-zinc-400 block uppercase tracking-wider font-semibold">
                                 Destination</flux:text>
                             <flux:text variant="strong" class="text-base text-zinc-900 dark:text-white mt-2">
-                                {{ $ticket->destination }}</flux:text>
+                                {{ $destination }}</flux:text>
                         </div>
                         <div class="flex items-center gap-2 mt-2 text-zinc-600 dark:text-zinc-300">
                             <flux:icon name="calendar" class="size-4 text-zinc-400" />
                             <flux:text size="sm" class="font-medium">
-                                {{ $ticket->start_date?->format('M d, Y') }} - {{ $ticket->end_date?->format('M d, Y') }}
+                                {{ $startDate?->format('M d, Y') }} - {{ $endDate?->format('M d, Y') }}
                             </flux:text>
                         </div>
                     </div>

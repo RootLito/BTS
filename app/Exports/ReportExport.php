@@ -14,10 +14,12 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class ReportExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
     protected $tickets;
+    protected $type;
 
-    public function __construct($tickets)
+    public function __construct($tickets, $type = 'local')
     {
         $this->tickets = $tickets;
+        $this->type = $type;
     }
 
     public function collection()
@@ -40,17 +42,47 @@ class ReportExport implements FromCollection, WithHeadings, WithMapping, ShouldA
 
     public function map($ticket): array
     {
+        if ($this->type === 'national') {
+            $startDate = $ticket->departure?->format('M d, Y') ?? '';
+            $endDate = $ticket->return_date?->format('M d, Y') ?? '';
+            $travelDate = ($startDate || $endDate) ? "{$startDate} - {$endDate}" : '';
+
+            $personnelNames = [];
+            if (is_array($ticket->personnel)) {
+                foreach ($ticket->personnel as $person) {
+                    if (isset($person['name'])) {
+                        $personnelNames[] = $person['name'];
+                    }
+                }
+            }
+            $travelers = implode(', ', $personnelNames);
+
+            return [
+                $ticket->to_no ?? '',
+                !empty($travelers) ? $travelers : ($ticket->client->name ?? ''),
+                $ticket->client->office ?? 'FAS',
+                $travelDate,
+                $ticket->purpose ?? $ticket->route,
+                $ticket->toReport->outputs ?? '',
+                '', 
+            ];
+        }
+
+        // Local (Trip Ticket) mapping logic
         $startDate = $ticket->start_date?->format('M d, Y') ?? '';
         $endDate = $ticket->end_date?->format('M d, Y') ?? '';
-        $travelDate = "{$startDate} - {$endDate}";
+        $travelDate = ($startDate || $endDate) ? "{$startDate} - {$endDate}" : '';
+
+        $travelers = is_array($ticket->passengers) ? implode(', ', $ticket->passengers) : '';
 
         return [
             $ticket->to_no ?? '',
-            $ticket->user->name ?? '',
+            !empty($travelers) ? $travelers : ($ticket->user->name ?? ''),
             $ticket->user->office ?? 'FAS',
             $travelDate,
             $ticket->purpose ?? $ticket->destination,
             $ticket->toReport->outputs ?? '',
+            '', 
         ];
     }
 
@@ -63,23 +95,25 @@ class ReportExport implements FromCollection, WithHeadings, WithMapping, ShouldA
                 'name' => 'Cambria',
                 'size' => 12,
                 'bold' => true,
-                'color' => ['rgb' => 'FFFFFF'], 
+                'color' => ['rgb' => 'FFFFFF'],
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
                 'startColor' => [
-                    'rgb' => 'E06666', 
+                    'rgb' => 'E06666',
                 ],
             ],
         ]);
 
-        $sheet->getStyle("A2:G{$totalRows}")->applyFromArray([
-            'font' => [
-                'name' => 'Arial',
-                'size' => 10,
-                'bold' => false,
-            ],
-        ]);
+        if ($totalRows > 1) {
+            $sheet->getStyle("A2:G{$totalRows}")->applyFromArray([
+                'font' => [
+                    'name' => 'Arial',
+                    'size' => 10,
+                    'bold' => false,
+                ],
+            ]);
+        }
 
         return [];
     }

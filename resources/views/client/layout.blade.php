@@ -84,13 +84,32 @@
                             if ($rawOffice) {
                                 $userOffice = strtolower(trim($rawOffice));
 
-                                $globalUnreadCount = \App\Models\DocumentTracking::whereHas('tripTicket', function (
-                                    $query,
-                                ) {
-                                    $query->whereNull('to_no')->orWhere('to_no', '');
+                                $globalUnreadCount = \App\Models\DocumentTracking::where(function ($query) {
+                                    $query
+                                        ->whereHas('tripTicket', function ($q) {
+                                            $q->where(function ($sub) {
+                                                $sub->whereNull('to_no')->orWhere('to_no', '');
+                                            })->where('status', 'NOT LIKE', '%cancel%');
+                                        })
+                                        ->orWhereHas('nationalTo', function ($q) {
+                                            $q->where('status', 'NOT LIKE', '%cancel%');
+                                        });
                                 })
                                     ->whereRaw('LOWER(TRIM(route_to)) = ?', [$userOffice])
                                     ->whereRaw('LOWER(TRIM(route_from)) != ?', [$userOffice])
+
+                                    ->whereNotIn('trip_ticket_id', function ($q) {
+                                        $q->select('trip_ticket_id')
+                                            ->from('document_trackings')
+                                            ->where('status', 'LIKE', '%cancel%')
+                                            ->whereNotNull('trip_ticket_id');
+                                    })
+                                    ->whereNotIn('national_to_id', function ($q) {
+                                        $q->select('national_to_id')
+                                            ->from('document_trackings')
+                                            ->where('status', 'LIKE', '%cancel%')
+                                            ->whereNotNull('national_to_id');
+                                    })
                                     ->count();
                             }
                         }
@@ -114,10 +133,20 @@
                     @php
                         $pendingReportsCount = 0;
                         if (auth()->check()) {
-                            $pendingReportsCount = \App\Models\TripTicket::where('client_id', auth()->id())
-                                ->where('end_date', '<', now()->startOfDay())
+                            $clientId = auth()->id();
+                            $today = now()->startOfDay();
+
+                            $pendingTripTickets = \App\Models\TripTicket::where('client_id', $clientId)
+                                ->where('end_date', '<', $today)
                                 ->doesntHave('toReport')
                                 ->count();
+
+                            $pendingNationalTos = \App\Models\NationalTo::where('client_id', $clientId)
+                                ->where('return_date', '<', $today)
+                                ->doesntHave('toReport')
+                                ->count();
+
+                            $pendingReportsCount = $pendingTripTickets + $pendingNationalTos;
                         }
                     @endphp
 

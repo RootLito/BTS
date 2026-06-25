@@ -136,31 +136,17 @@
                             business departments.</flux:text>
                     </div>
 
-                    <div class="flex flex-wrap gap-3 pt-2">
+                    <div class="flex gap-3 pt-2 w-full">
                         @if (
                             ($isNational && $nationalTo?->client_id !== auth()->id()) ||
                                 (!$isNational && $tripTicket?->client_id !== auth()->id()))
-                            @php
-                                $latestLog = $trackings->first();
-                                $isSenderPending =
-                                    $latestLog &&
-                                    $latestLog->status === 'Released' &&
-                                    $latestLog->route_from === $userOffice;
-                                $isAlreadyReceivedByUs =
-                                    $latestLog &&
-                                    $latestLog->status === 'Received' &&
-                                    $latestLog->client_id == auth()->id();
-
-                                $cannotReceive = $isSenderPending || $isAlreadyReceivedByUs;
-                                $targetId = $isNational ? $nationalTo?->id : $tripTicket?->id;
-                            @endphp
-
                             @php
                                 $userOffice = is_object(auth()->user()->office)
                                     ? auth()->user()->office->name
                                     : auth()->user()->office;
 
                                 $latestLog = $trackings->first();
+                                $isCancelled = $latestLog && $latestLog->status === 'Cancelled';
 
                                 // 1. Did our office forward this document last?
                                 $isSenderPending =
@@ -184,20 +170,23 @@
                                     $latestLog->status === 'Released' &&
                                     $latestLog->route_to === $userOffice;
 
-                                // Gray out the button if we aren't the ones who are supposed to receive it right now
-                                $cannotReceive = !$isIncomingToUs || $isSenderPending || $isAlreadyReceivedByUs;
+                                // Gray out the button if we shouldn't receive it, or if it is completely Cancelled
+                                $cannotReceive =
+                                    $isCancelled || !$isIncomingToUs || $isSenderPending || $isAlreadyReceivedByUs;
+                                $targetId = $isNational ? $nationalTo?->id : $tripTicket?->id;
                             @endphp
 
                             <form action="{{ route('client.document-tracking.receive', $targetId ?? 0) }}" method="POST">
                                 @csrf
-                                <flux:button type="submit" variant="filled" color="emerald" icon="check-circle"
-                                    :disabled="$cannotReceive">
-                                    @if ($isSenderPending)
+                                <flux:button type="submit" variant="filled" :color="$isCancelled ? 'red' : 'emerald'"
+                                    :icon="$isCancelled ? 'x-circle' : 'check-circle'" :disabled="$cannotReceive">
+
+                                    @if ($isCancelled)
+                                        Document Cancelled
+                                    @elseif ($isSenderPending)
                                         Document Forwarded
                                     @elseif ($isAlreadyReceivedByUs)
                                         Document Received
-                                    @elseif (!$isIncomingToUs && $latestLog && $latestLog->route_from !== $userOffice)
-                                        In Transit (At {{ $latestLog->route_to ?? 'Other Office' }})
                                     @else
                                         Receive Document
                                     @endif
@@ -207,7 +196,7 @@
 
                         <form
                             action="{{ route('client.document-tracking.track', ($isNational ? $nationalTo?->id : $tripTicket?->id) ?? 0) }}"
-                            method="POST" class="flex items-end gap-3 w-full">
+                            method="POST" class="flex items-end gap-3 flex-1">
                             @csrf
                             <input type="hidden" name="document_no"
                                 value="{{ $documentNo === 'N/A' ? '' : $documentNo }}">
@@ -242,12 +231,17 @@
                             </flux:button>
 
 
-                            <flux:modal.trigger name="cancel-document-modal">
-                                <flux:button type="button" variant="danger" icon="x-circle" class="ms-auto"
-                                    :disabled="$trackings->first()?->status === 'Cancelled'">
-                                    {{ $trackings->first()?->status === 'Cancelled' ? 'Cancelled' : 'Cancel' }}
-                                </flux:button>
-                            </flux:modal.trigger>
+                            @if (auth()->check() &&
+                                    ($trackings->first()?->is_national
+                                        ? $trackings->first()?->nationalTo?->client_id
+                                        : $trackings->first()?->tripTicket?->client_id) === auth()->id())
+                                <flux:modal.trigger name="cancel-document-modal">
+                                    <flux:button type="button" variant="danger" icon="x-circle" class="ms-auto"
+                                        :disabled="$trackings->first()?->status === 'Cancelled'">
+                                        {{ $trackings->first()?->status === 'Cancelled' ? 'Cancelled' : 'Cancel' }}
+                                    </flux:button>
+                                </flux:modal.trigger>
+                            @endif
                         </form>
                     </div>
                 @endif

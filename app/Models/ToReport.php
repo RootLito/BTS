@@ -9,14 +9,18 @@ class ToReport extends Model
 {
     protected $fillable = [
         'trip_ticket_id',
+        'national_to_id',
         'outputs',
     ];
 
-    /**
-     * Get the trip ticket that owns this report.
-     */
+
     public function tripTicket(): BelongsTo
     {
-        return $this->belongsTo(TripTicket::class);
+        return $this->belongsTo(TripTicket::class, 'trip_ticket_id');
+    }
+
+    public function nationalTo(): BelongsTo
+    {
+        return $this->belongsTo(NationalTo::class, 'national_to_id');
     }
 }

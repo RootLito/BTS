@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 
 class NationalTo extends Model
@@ -42,5 +43,10 @@ class NationalTo extends Model
     public function documentTrackings(): HasMany
     {
         return $this->hasMany(DocumentTracking::class, 'national_to_id');
+    }
+
+    public function toReport(): HasOne
+    {
+        return $this->hasOne(ToReport::class, 'national_to_id');
     }
 }
