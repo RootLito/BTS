@@ -216,6 +216,7 @@
             <form action="{{ route('client.national-to.track', $travelOrder->id) }}" method="POST"
                 class="space-y-6 w-full">
                 @csrf
+                <input type="hidden" name="type" value="national">
                 <div>
                     <flux:heading size="lg">Track Document</flux:heading>
                 </div>

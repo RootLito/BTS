@@ -33,7 +33,8 @@
                 </flux:dropdown>
 
                 <div class="flex gap-2">
-                    <flux:button type="submit" variant="primary" color="emerald">Filter</flux:button>
+                    <flux:button type="submit" variant="primary" color="emerald" icon="adjustments-horizontal">Filter
+                    </flux:button>
 
                     @if (request()->anyFilled(['search', 'sort']))
                         <flux:button href="{{ route('client.national-to') }}" variant="filled" color="zinc"
@@ -121,34 +122,25 @@
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    <div class="flex gap-2 items-center justify-end">
+                                    <div class="flex gap-2 items-center">
+                                        <flux:modal.trigger :name="'track-ticket-' . $order->id">
+                                            <flux:button icon="map">Track</flux:button>
+                                        </flux:modal.trigger>
+
                                         <flux:dropdown>
                                             <flux:button icon-trailing="chevron-down" class="text-sm">Actions</flux:button>
                                             <flux:menu>
-                                                {{-- VIEW TRIGGER --}}
                                                 <flux:modal.trigger :name="'view-order-' . $order->id">
                                                     <flux:menu.item icon="eye">View Details</flux:menu.item>
                                                 </flux:modal.trigger>
-
-                                                {{-- EDIT TRIGGER --}}
                                                 <flux:modal.trigger :name="'edit-order-' . $order->id">
                                                     <flux:menu.item icon="pencil">Edit / Update</flux:menu.item>
                                                 </flux:modal.trigger>
-
-                                                {{-- TRACKING OPTION --}}
-                                                <flux:modal.trigger :name="'track-order-' . $order->id">
-                                                    <flux:menu.item icon="map-pin">Track Order</flux:menu.item>
-                                                </flux:modal.trigger>
-
-                                                {{-- LINK TO PRINT VIEW --}}
                                                 <flux:menu.item icon="document-text"
                                                     href="{{ route('client.national-to.show', $order->id) }}">
                                                     Print TO
                                                 </flux:menu.item>
-
                                                 <flux:menu.separator />
-
-                                                {{-- DELETE TRIGGER --}}
                                                 <flux:modal.trigger :name="'delete-order-' . $order->id">
                                                     <flux:menu.item variant="danger" icon="trash">Delete</flux:menu.item>
                                                 </flux:modal.trigger>
@@ -405,54 +397,81 @@
         </flux:modal>
 
         {{-- TRACKING MODAL --}}
-        <flux:modal :name="'track-order-' . $order->id" class="md:w-[500px]">
+        <flux:modal :name="'track-ticket-' . $order->id" class="max-w-none!">
             <div class="space-y-6">
                 <div>
-                    <flux:heading size="lg">Document Route Tracking</flux:heading>
-                    <flux:text size="sm">Real-time status updates and routing trail logs for TO
-                        #{{ $order->to_no ?? 'PENDING' }}</flux:text>
+                    <flux:heading size="lg">Document Tracking</flux:heading>
+                    <flux:text size="sm" class="text-zinc-500 dark:text-zinc-400">
+                        Routing history and office processing logs for your travel order document
+                        #{{ $order->to_no ?? 'PENDING' }}.
+                    </flux:text>
                 </div>
 
-                <div class="relative border-l border-zinc-200 dark:border-zinc-700 ml-3 space-y-6 py-2">
-                    {{-- Status Milestone Example 1 --}}
-                    <div class="relative pl-6">
-                        <div
-                            class="absolute -left-[6.5px] top-1.5 bg-emerald-500 rounded-full w-3 h-3 ring-4 ring-emerald-100 dark:ring-emerald-950/50">
-                        </div>
-                        <span class="text-xs text-zinc-400 font-medium block">June 22, 2026 - 10:30 AM</span>
-                        <flux:text variant="strong" size="sm" class="text-emerald-600 dark:text-emerald-400">
-                            Document Approved & Released</flux:text>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Signed off by the Regional Director.
-                            Document ready for execution.</p>
-                    </div>
+                @if (!empty($order->stepper_steps) && count($order->stepper_steps) > 0)
+                    <div class="relative flex items-start justify-between mt-8 z-0 pb-4 overflow-x-auto">
+                        @foreach ($order->stepper_steps as $step)
+                            <div
+                                class="flex flex-col items-center flex-1 min-w-[150px] max-w-xl text-center relative px-2">
 
-                    {{-- Status Milestone Example 2 --}}
-                    <div class="relative pl-6">
-                        <div
-                            class="absolute -left-[6.5px] top-1.5 bg-amber-500 rounded-full w-3 h-3 ring-4 ring-amber-100 dark:ring-amber-950/50">
-                        </div>
-                        <span class="text-xs text-zinc-400 font-medium block">June 21, 2026 - 02:15 PM</span>
-                        <flux:text variant="strong" size="sm" class="text-zinc-800 dark:text-zinc-200">Under Review
-                            (Budget & Finance)
-                        </flux:text>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Fund allocation verified. Forwarded to
-                            higher executive clearance.</p>
-                    </div>
+                                @if (isset($step['has_next_line']) && $step['has_next_line'])
+                                    <div
+                                        class="absolute top-[18px] left-[50%] right-[-50%] h-[3px] {{ !empty($step['is_released']) ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-zinc-200 dark:bg-zinc-700' }} -z-10 transition-colors duration-200">
+                                    </div>
+                                @endif
 
-                    {{-- Status Milestone Example 3 --}}
-                    <div class="relative pl-6">
-                        <div
-                            class="absolute -left-[6.5px] top-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full w-3 h-3 ring-4 ring-zinc-100 dark:ring-zinc-900">
-                        </div>
-                        <span class="text-xs text-zinc-400 font-medium block">June 20, 2026 - 09:00 AM</span>
-                        <flux:text variant="strong" size="sm" class="text-zinc-600 dark:text-zinc-400">Draft
-                            Document Created</flux:text>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Submitted initially via Client Portal by
-                            {{ Auth::guard('client')->user()->name }}.</p>
-                    </div>
-                </div>
+                                <div
+                                    class="flex items-center justify-center size-9 rounded-full border transition-colors duration-200 shadow-none
+                        {{ !empty($step['is_released'])
+                            ? 'bg-emerald-500 border-emerald-500 text-white font-bold'
+                            : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-300 text-zinc-400 dark:border-zinc-600 dark:text-zinc-500' }}">
+                                    @if (!empty($step['is_released']))
+                                        <flux:icon name="check" class="size-6 text-white" variant="micro" />
+                                    @else
+                                        <span class="text-xs font-semibold">{{ $loop->iteration }}</span>
+                                    @endif
+                                </div>
 
-                <div class="flex justify-end">
+                                <span
+                                    class="mt-3 text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                                    {{ $step['name'] ?? 'Unknown Step' }}
+                                </span>
+
+                                <div
+                                    class="mt-3 w-full bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800/80 rounded-lg p-2 text-left space-y-1.5">
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 tracking-wider">RECEIVED</span>
+                                        <span
+                                            class="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 {{ ($step['received_at'] ?? '') === 'Not Applicable' ? 'italic text-zinc-400 dark:text-zinc-500' : '' }}">
+                                            {{ $step['received_at'] ?? 'Pending' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="h-[1px] bg-zinc-200/60 dark:bg-zinc-800/80 w-full"></div>
+
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 tracking-wider">RELEASED</span>
+                                        <span
+                                            class="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 {{ ($step['released_at'] ?? '') === 'Not Applicable' ? 'italic text-zinc-400 dark:text-zinc-500' : '' }}">
+                                            {{ $step['released_at'] ?? 'Pending' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div
+                        class="flex flex-col items-center justify-center py-12 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/20">
+                        <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">No History Logged</span>
+                        <span class="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs mt-1">This document hasn't completed
+                            any tracking movements yet.</span>
+                    </div>
+                @endif
+
+                <div class="flex justify-end mt-4">
                     <flux:modal.close>
                         <flux:button variant="filled">Close Tracker</flux:button>
                     </flux:modal.close>

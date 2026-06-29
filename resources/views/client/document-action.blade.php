@@ -112,21 +112,35 @@
                             <flux:text size="sm">Manage incoming acceptances or dispatch items onward to neighboring
                                 business departments.</flux:text>
                         </div>
-                        @if (!$isNational && $tripTicket?->to_no)
-                            <flux:button disabled variant="filled" icon="check-circle">
-                                TO GENERATED ({{ $tripTicket->to_no }})
-                            </flux:button>
-                        @elseif ($isNational)
-                            <flux:button disabled variant="filled" icon="globe-alt">
-                                NATIONAL TO TIMELINE
-                            </flux:button>
-                        @else
-                            <form action="{{ route('trip-tickets.generate-to', $tripTicket?->id ?? 0) }}" method="POST">
-                                @csrf
-                                <flux:button type="submit" variant="primary" color="emerald" icon="document-text">
-                                    Generate TO
+
+                        @if ($isNational)
+                            @if ($nationalTo?->to_no)
+                                <flux:button disabled variant="filled" icon="check-circle">
+                                    NATIONAL TO GENERATED ({{ $nationalTo->to_no }})
                                 </flux:button>
-                            </form>
+                            @else
+                                <form action="{{ route('national-to.generate-to', $nationalTo?->id ?? 0) }}"
+                                    method="POST">
+                                    @csrf
+                                    <flux:button type="submit" variant="primary" color="emerald" icon="document-text">
+                                        Generate National TO
+                                    </flux:button>
+                                </form>
+                            @endif
+                        @else
+                            @if ($tripTicket?->to_no)
+                                <flux:button disabled variant="filled" icon="check-circle">
+                                    TO GENERATED ({{ $tripTicket->to_no }})
+                                </flux:button>
+                            @else
+                                <form action="{{ route('trip-tickets.generate-to', $tripTicket?->id ?? 0) }}"
+                                    method="POST">
+                                    @csrf
+                                    <flux:button type="submit" variant="primary" color="emerald" icon="document-text">
+                                        Generate TO
+                                    </flux:button>
+                                </form>
+                            @endif
                         @endif
                     </div>
                 @else
@@ -148,13 +162,11 @@
                                 $latestLog = $trackings->first();
                                 $isCancelled = $latestLog && $latestLog->status === 'Cancelled';
 
-                                // 1. Did our office forward this document last?
                                 $isSenderPending =
                                     $latestLog &&
                                     $latestLog->status === 'Released' &&
                                     $latestLog->route_from === $userOffice;
 
-                                // 2. Has our office already received it, and no one has forwarded it yet?
                                 $isAlreadyReceivedByUs =
                                     $latestLog &&
                                     $latestLog->status === 'Received' &&
@@ -164,13 +176,11 @@
                                             ->where('status', 'Received')
                                             ->isNotEmpty());
 
-                                // 3. Is this document explicitly heading to our office right now?
                                 $isIncomingToUs =
                                     $latestLog &&
                                     $latestLog->status === 'Released' &&
                                     $latestLog->route_to === $userOffice;
 
-                                // Gray out the button if we shouldn't receive it, or if it is completely Cancelled
                                 $cannotReceive =
                                     $isCancelled || !$isIncomingToUs || $isSenderPending || $isAlreadyReceivedByUs;
                                 $targetId = $isNational ? $nationalTo?->id : $tripTicket?->id;
@@ -198,6 +208,9 @@
                             action="{{ route('client.document-tracking.track', ($isNational ? $nationalTo?->id : $tripTicket?->id) ?? 0) }}"
                             method="POST" class="flex items-end gap-3 flex-1">
                             @csrf
+
+                            <input type="hidden" name="type" value="{{ $isNational ? 'national' : 'local' }}">
+
                             <input type="hidden" name="document_no"
                                 value="{{ $documentNo === 'N/A' ? '' : $documentNo }}">
                             <input type="hidden" name="route" id="forward_to_input" required>
@@ -229,7 +242,6 @@
                                 :disabled="$trackings->first()?->status === 'Cancelled'">
                                 Forward
                             </flux:button>
-
 
                             @if (auth()->check() &&
                                     ($trackings->first()?->is_national

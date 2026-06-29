@@ -92,7 +92,9 @@
                                             })->where('status', 'NOT LIKE', '%cancel%');
                                         })
                                         ->orWhereHas('nationalTo', function ($q) {
-                                            $q->where('status', 'NOT LIKE', '%cancel%');
+                                            $q->where(function ($sub) {
+                                                $sub->whereNull('to_no')->orWhere('to_no', '');
+                                            })->where('status', 'NOT LIKE', '%cancel%');
                                         });
                                 })
                                     ->whereRaw('LOWER(TRIM(route_to)) = ?', [$userOffice])

@@ -91,19 +91,34 @@ class TravelOrderController extends Controller
 
 
 
-    public function receive(TripTicket $tripTicket)
+    public function receive(Request $request, $id)
     {
+        $isNational = false;
+        $model = TripTicket::find($id);
+
+        if (!$model) {
+            $model = NationalTo::find($id);
+            if (!$model) {
+                return redirect()->back()->with('error', 'Document record not found.');
+            }
+            $isNational = true;
+        }
+
         $userOffice = is_object(auth()->user()->office) ? auth()->user()->office->name : auth()->user()->office;
         $currentClientId = auth()->id();
-        $lastGlobalTracking = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
+        $foreignKey = $isNational ? 'national_to_id' : 'trip_ticket_id';
+
+        $lastGlobalTracking = DocumentTracking::where($foreignKey, $id)
             ->latest()
             ->first();
+
         if ($lastGlobalTracking) {
             if ($lastGlobalTracking->status === 'Released' && $lastGlobalTracking->route_from === $userOffice) {
                 return redirect()->back()->with('error', 'You cannot receive this document because your office released it.');
             }
         }
-        $lastClientTracking = DocumentTracking::where('trip_ticket_id', $tripTicket->id)
+
+        $lastClientTracking = DocumentTracking::where($foreignKey, $id)
             ->where('client_id', $currentClientId)
             ->latest()
             ->first();
@@ -111,33 +126,43 @@ class TravelOrderController extends Controller
         if ($lastClientTracking && $lastClientTracking->status === 'Received') {
             return redirect()->back()->with('error', 'Document has already been received by your office.');
         }
+
+        $documentNo = $lastGlobalTracking ? $lastGlobalTracking->document_no : ($model->document_no ?? '');
         $comingFrom = $lastGlobalTracking ? $lastGlobalTracking->route_from : 'Origin';
+
         DocumentTracking::create([
-            'trip_ticket_id' => $tripTicket->id,
+            'trip_ticket_id' => !$isNational ? $id : null,
+            'national_to_id' => $isNational ? $id : null,
+            'is_national' => $isNational,
             'client_id' => $currentClientId,
-            'document_no' => $tripTicket->document_no ?? $lastGlobalTracking->document_no ?? '',
+            'document_no' => $documentNo,
             'route_from' => $comingFrom,
             'route_to' => 'Not Applicable',
             'status' => 'Received',
             'date_released' => null,
             'date_received' => now(),
         ]);
+
         return redirect()->back()->with('success', 'Document logged at ' . $userOffice);
     }
 
 
-    public function track(Request $request, TripTicket $tripTicket)
+    public function track(Request $request, $id)
     {
         $validated = $request->validate([
             'document_no' => 'required|string',
             'route' => 'required|string',
             'remarks' => 'nullable|string',
+            'type' => 'required|string',
         ]);
 
+        $isNational = ($validated['type'] === 'national');
         $userOffice = auth()->user()->office;
 
         DocumentTracking::create([
-            'trip_ticket_id' => $tripTicket->id,
+            'trip_ticket_id' => !$isNational ? $id : null,
+            'national_to_id' => $isNational ? $id : null,
+            'is_national' => $isNational,
             'client_id' => auth()->id(),
             'document_no' => $validated['document_no'],
             'route_from' => $userOffice,
@@ -247,21 +272,32 @@ class TravelOrderController extends Controller
     //     return view('client.document-tracking', compact('documents', 'offices'));
     // }
 
-    public function index()
+    public function index(Request $request)
     {
-        $userOffice = auth()->user()->office;
+        $rawOffice = auth()->user()->office ?? (auth()->user()->client->office ?? null);
+        $userOffice = $rawOffice ? strtolower(trim($rawOffice)) : null;
         $userId = auth()->id();
 
         $documents = DocumentTracking::with(['tripTicket.notes', 'nationalTo'])
-            ->where(function ($query) use ($userOffice, $userId) {
-                $query->where('route_to', $userOffice)
-                    ->orWhere('route_from', $userOffice)
+            ->where(function ($query) use ($rawOffice, $userId) {
+                $query->where('route_to', $rawOffice)
+                    ->orWhere('route_from', $rawOffice)
                     ->orWhereHas('tripTicket', function ($q) use ($userId) {
                         $q->where('client_id', $userId);
                     })
                     ->orWhereHas('nationalTo', function ($q) use ($userId) {
                         $q->where('client_id', $userId);
                     });
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $query->where('document_no', 'like', '%' . $request->search . '%');
+            })
+            ->when($request->filled('to_type'), function ($query) use ($request) {
+                if ($request->to_type === 'national') {
+                    $query->where('is_national', true);
+                } elseif ($request->to_type === 'local') {
+                    $query->where('is_national', false);
+                }
             })
             ->latest()
             ->get();
@@ -272,28 +308,59 @@ class TravelOrderController extends Controller
                 : 'trip_' . $item->trip_ticket_id;
         })->values();
 
-        $receivedTrackings = DocumentTracking::where('status', 'Received')
-            ->where(function ($q) use ($userOffice) {
-                $q->where('route_from', $userOffice)
-                    ->orWhere('route_to', $userOffice);
-            })
-            ->get();
+        $cancelledTicketIds = DocumentTracking::where('status', 'LIKE', '%cancel%')
+            ->whereNotNull('trip_ticket_id')
+            ->pluck('trip_ticket_id')
+            ->toArray();
 
-        $cancelledTrackings = DocumentTracking::where('status', 'Cancelled')->get();
-        $cancelledTicketIds = $cancelledTrackings->pluck('trip_ticket_id')->filter()->toArray();
-        $cancelledNationalIds = $cancelledTrackings->pluck('national_to_id')->filter()->toArray();
+        $cancelledNationalIds = DocumentTracking::where('status', 'LIKE', '%cancel%')
+            ->whereNotNull('national_to_id')
+            ->pluck('national_to_id')
+            ->toArray();
 
-        $receivedTicketIds = $receivedTrackings->pluck('trip_ticket_id')->filter()->toArray();
-        $receivedNationalIds = $receivedTrackings->pluck('national_to_id')->filter()->toArray();
-
-        $documents->transform(function ($doc) use ($receivedTicketIds, $receivedNationalIds, $cancelledTicketIds, $cancelledNationalIds, $userOffice) {
-            if ($doc->is_national) {
-                $isCancelled = in_array($doc->national_to_id, $cancelledNationalIds);
-                $doc->is_new = (!$isCancelled && $doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->national_to_id, $receivedNationalIds));
-            } else {
-                $isCancelled = in_array($doc->trip_ticket_id, $cancelledTicketIds);
-                $doc->is_new = (!$isCancelled && $doc->route_to === $userOffice && $doc->status === 'Released' && !in_array($doc->trip_ticket_id, $receivedTicketIds));
+        $documents->transform(function ($doc) use ($userOffice, $cancelledTicketIds, $cancelledNationalIds) {
+            if (!$userOffice) {
+                $doc->is_new = false;
+                return $doc;
             }
+
+            $routeTo = strtolower(trim($doc->route_to));
+            $routeFrom = strtolower(trim($doc->route_from));
+
+            if ($doc->is_national) {
+                if (in_array($doc->national_to_id, $cancelledNationalIds)) {
+                    $doc->is_new = false;
+                    return $doc;
+                }
+                if ($doc->nationalTo) {
+                    if (str_contains(strtolower($doc->nationalTo->status), 'cancel')) {
+                        $doc->is_new = false;
+                        return $doc;
+                    }
+                    // FIX: Turn off the new indicator badge if the National TO number has already been generated
+                    if (!empty($doc->nationalTo->to_no)) {
+                        $doc->is_new = false;
+                        return $doc;
+                    }
+                }
+            } else {
+                if (in_array($doc->trip_ticket_id, $cancelledTicketIds)) {
+                    $doc->is_new = false;
+                    return $doc;
+                }
+                if ($doc->tripTicket) {
+                    if (str_contains(strtolower($doc->tripTicket->status), 'cancel')) {
+                        $doc->is_new = false;
+                        return $doc;
+                    }
+                    if (!empty($doc->tripTicket->to_no)) {
+                        $doc->is_new = false;
+                        return $doc;
+                    }
+                }
+            }
+
+            $doc->is_new = ($routeTo === $userOffice && $routeFrom !== $userOffice);
             return $doc;
         });
 
@@ -506,6 +573,76 @@ class TravelOrderController extends Controller
 
         return redirect()->back()->with('success', 'Document received and TO (' . $tripTicket->to_no . ') generated successfully at ' . $userOffice);
     }
+
+    public function generateNationalTo(NationalTo $nationalTo)
+    {
+        $userOffice = is_object(auth()->user()->office) ? auth()->user()->office->name : auth()->user()->office;
+        $currentClientId = auth()->id();
+
+        $lastGlobalTracking = DocumentTracking::where('national_to_id', $nationalTo->id)
+            ->latest()
+            ->first();
+        $comingFrom = $lastGlobalTracking ? $lastGlobalTracking->route_from : 'Origin';
+
+        try {
+            DB::transaction(function () use ($nationalTo, $currentClientId, $lastGlobalTracking, $comingFrom) {
+                if (empty($nationalTo->to_no)) {
+                    $periodKey = Carbon::now()->format('Yn');
+
+                    $counter = DB::table('travel_order_counters')
+                        ->where('period_key', $periodKey)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$counter) {
+                        DB::table('travel_order_counters')->insert([
+                            'national_to_id' => $nationalTo->id,
+                            'period_key' => $periodKey,
+                            'current_value' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        $nextValue = 1;
+                    } else {
+                        $nextValue = $counter->current_value + 1;
+                        DB::table('travel_order_counters')
+                            ->where('id', $counter->id)
+                            ->update([
+                                'national_to_id' => $nationalTo->id,
+                                'current_value' => $nextValue,
+                                'updated_at' => now(),
+                            ]);
+                    }
+
+                    $formattedYear = Carbon::now()->format('Y-');
+                    $monthAndCounter = Carbon::now()->format('n') . str_pad($nextValue, 3, '0', STR_PAD_LEFT);
+                    $nationalTo->to_no = $formattedYear . $monthAndCounter;
+                    $nationalTo->save();
+                }
+
+                DocumentTracking::create([
+                    'national_to_id' => $nationalTo->id,
+                    'client_id' => $currentClientId,
+                    'document_no' => $nationalTo->document_no ?? $lastGlobalTracking->document_no ?? '',
+                    'route_from' => $comingFrom,
+                    'route_to' => 'Not Applicable',
+                    'status' => 'Received',
+                    'date_released' => null,
+                    'date_received' => now(),
+                ]);
+            });
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to generate National TO: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Document received and National TO (' . $nationalTo->to_no . ') generated successfully at ' . $userOffice);
+    }
+
+
+
+
+
 
     public function cancel(Request $request, $id)
     {

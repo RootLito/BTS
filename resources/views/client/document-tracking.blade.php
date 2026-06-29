@@ -4,6 +4,56 @@
     <flux:heading size="xl" level="1">Document Tracking</flux:heading>
     <flux:text class="mt-2 mb-6 text-base">View and track documents routed to your office.</flux:text>
 
+    <div class="mb-4">
+        <div class="flex items-center justify-between gap-2">
+            <form action="{{ route('client.document-tracking') }}" method="GET" class="flex flex-1 items-center gap-2">
+                <div class="w-100">
+                    <flux:input name="search" value="{{ request('search') }}" icon="magnifying-glass"
+                        placeholder="Search document no..." />
+                </div>
+
+                <flux:dropdown>
+                    <flux:button icon:trailing="chevron-down">
+                        @if (request('to_type') === 'national')
+                            National TO
+                        @elseif(request('to_type') === 'local')
+                            Local TO
+                        @else
+                            All TO
+                        @endif
+                    </flux:button>
+                    <flux:menu class="max-h-60 overflow-y-auto">
+                        <flux:menu.radio.group name="to_type" value="{{ request('to_type') }}">
+                            <flux:menu.item
+                                href="{{ route('client.document-tracking', array_merge(request()->query(), ['to_type' => ''])) }}">
+                                All TO Types
+                            </flux:menu.item>
+                            <flux:menu.item
+                                href="{{ route('client.document-tracking', array_merge(request()->query(), ['to_type' => 'national'])) }}">
+                                National TO
+                            </flux:menu.item>
+                            <flux:menu.item
+                                href="{{ route('client.document-tracking', array_merge(request()->query(), ['to_type' => 'local'])) }}">
+                                Local TO
+                            </flux:menu.item>
+                        </flux:menu.radio.group>
+                    </flux:menu>
+                </flux:dropdown>
+
+                <div class="flex gap-2">
+                    <flux:button type="submit" variant="primary" color="emerald" icon="adjustments-horizontal">Filter</flux:button>
+
+                    @if (request()->anyFilled(['search', 'to_type']))
+                        <flux:button href="{{ route('client.document-tracking') }}" variant="filled" color="zinc"
+                            icon="x-mark">
+                            Clear
+                        </flux:button>
+                    @endif
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="mt-10">
         <flux:card class="space-y-6 overflow-hidden mt-10">
             <flux:table>

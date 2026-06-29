@@ -87,7 +87,6 @@
                 </div>
             </div>
 
-            {{-- Printable Travel Order Document --}}
             <div class="printable-folio bg-white mx-auto shadow-lg print:shadow-none mb-4">
                 <img src="{{ asset('images/top.png') }}" alt="Header" class="top">
 
@@ -243,6 +242,7 @@
             <form action="{{ route('client.trip-ticket.travel-order.track', $tripTicket->id) }}" method="POST"
                 class="space-y-6 w-full">
                 @csrf
+                <input type="hidden" name="type" value="local">
                 <div>
                     <flux:heading size="lg">Track Document</flux:heading>
                 </div>

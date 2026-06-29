@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Models\DocumentTracking; 
+use App\Models\DocumentTracking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +11,65 @@ class NationalToController extends Controller
 {
     public function index()
     {
-        $travelOrders = Auth::guard('client')->user()->nationalTos()->latest()->get();
+        // 1. Eager load document trackings and their clients just like the local trip tickets
+        $travelOrders = Auth::guard('client')->user()
+            ->nationalTos()
+            ->with(['documentTrackings.client'])
+            ->latest()
+            ->get();
+
+        // 2. Map through each national order to generate the identical stepper data structure
+        $travelOrders->transform(function ($order) {
+            $sorted = $order->documentTrackings->sortBy('id')->values();
+            $milestones = collect();
+
+            foreach ($sorted as $track) {
+                $officeName = $track->client?->office;
+                if ($officeName) {
+                    $milestones->push($officeName);
+                }
+            }
+
+            $uniqueRoutes = $milestones->unique()->values();
+
+            $order->stepper_steps = $uniqueRoutes->map(function ($routeName, $index) use ($sorted, $uniqueRoutes) {
+                $receivedLog = $sorted->first(function ($track) use ($routeName) {
+                    return $track->client?->office === $routeName && $track->status === 'Received';
+                });
+
+                $releasedLog = $sorted->first(function ($track) use ($routeName) {
+                    return $track->client?->office === $routeName && $track->status === 'Released';
+                });
+
+                $dateFormat = 'M j Y g:iA';
+                $isFirstNode = ($index === 0);
+
+                if ($isFirstNode && !$receivedLog) {
+                    $receivedText = 'Not Applicable';
+                } else {
+                    $receivedText = $receivedLog?->date_received ? $receivedLog->date_received->format($dateFormat) : '--:--';
+                }
+
+                if ($routeName === 'FAS') {
+                    $releasedText = 'Not Applicable';
+                    $isReleased = !is_null($receivedLog);
+                } else {
+                    $releasedText = $releasedLog?->date_released ? $releasedLog->date_released->format($dateFormat) : '--:--';
+                    $isReleased = !is_null($releasedLog);
+                }
+
+                return [
+                    'name' => $routeName,
+                    'is_released' => $isReleased,
+                    'received_at' => $receivedText,
+                    'released_at' => $releasedText,
+                    'has_next_line' => $index < (count($uniqueRoutes) - 1)
+                ];
+            });
+
+            return $order;
+        });
+
         return view('client.national-to', compact('travelOrders'));
     }
 
@@ -33,11 +91,7 @@ class NationalToController extends Controller
 
         $travelOrder = Auth::guard('client')->user()->nationalTos()->create($validated);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'National Travel Order created successfully!',
-            'data' => $travelOrder
-        ]);
+        return back()->with('success', 'National Travel Order created successfully!');
     }
 
     public function show($id)
@@ -54,10 +108,10 @@ class NationalToController extends Controller
         $travelOrder->return_date = $travelOrder->return_date ? $travelOrder->return_date->format('Y-m-d') : '';
 
         $offices = Client::whereNotNull('office')
-        ->where('office', '!=', '')
-        ->distinct()
-        ->pluck('office')
-        ->toArray();
+            ->where('office', '!=', '')
+            ->distinct()
+            ->pluck('office')
+            ->toArray();
 
         $latestTracking = DocumentTracking::where('national_to_id', $travelOrder->id)
             ->latest()
@@ -72,7 +126,7 @@ class NationalToController extends Controller
 
         $request->validate([
             'document_no' => 'required|string',
-            'route' => 'required|string', 
+            'route' => 'required|string',
             'remarks' => 'nullable|string',
         ]);
 
@@ -82,7 +136,7 @@ class NationalToController extends Controller
             'is_national' => true,
             'client_id' => Auth::guard('client')->id(),
             'document_no' => $request->document_no,
-            'route_from' => 'Client Office', 
+            'route_from' => 'Client Office',
             'route_to' => $request->route,
             'status' => 'Released',
             'date_released' => now(),

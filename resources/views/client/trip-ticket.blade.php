@@ -32,7 +32,7 @@
                 </flux:dropdown>
 
                 <div class="flex gap-2">
-                    <flux:button type="submit" variant="primary" color="emerald">Filter</flux:button>
+                    <flux:button type="submit" variant="primary" color="emerald" icon="adjustments-horizontal">Filter</flux:button>
 
                     @if (request()->anyFilled(['search', 'sort']))
                         <flux:button href="{{ route('client.trip-ticket') }}" variant="filled" color="zinc"

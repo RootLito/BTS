@@ -27,18 +27,12 @@
 
         <div class="mb-4">
             <div class="flex items-center justify-between gap-2">
-                <!-- Filter Form Items wrapper -->
                 <form action="{{ route('client.to-report') }}" method="GET" class="flex flex-1 items-center gap-2">
-
-                    <!-- Preserve the Type on Form Submit -->
                     <input type="hidden" name="type" value="{{ $type }}">
-
-                    <!-- Search Input -->
                     <div class="w-full max-w-xs">
                         <flux:input name="search" value="{{ request('search') }}" icon="magnifying-glass"
                             placeholder="Search trips..." />
                     </div>
-
                     @if (auth()->guard('client')->user()->office === 'FAS')
                         <flux:dropdown>
                             <flux:button icon:trailing="chevron-down">
@@ -60,8 +54,6 @@
                             </flux:menu>
                         </flux:dropdown>
                     @endif
-
-                    <!-- Year Filter Dropdown -->
                     <flux:dropdown>
                         <flux:button icon:trailing="chevron-down">
                             {{ request('year') ? request('year') : 'Select Year' }}
@@ -81,8 +73,6 @@
                             </flux:menu.radio.group>
                         </flux:menu>
                     </flux:dropdown>
-
-                    <!-- Month Filter Dropdown -->
                     <flux:dropdown>
                         <flux:button icon:trailing="chevron-down">
                             @if (request('month'))
@@ -111,7 +101,7 @@
                     </flux:dropdown>
 
                     <div class="flex gap-2">
-                        <flux:button type="submit" variant="primary" color="emerald">Filter</flux:button>
+                        <flux:button type="submit" variant="primary" color="emerald" icon="adjustments-horizontal">Filter</flux:button>
 
                         @if (request()->anyFilled(['search', 'year', 'month']))
                             <flux:button href="{{ route('client.to-report', ['type' => $type]) }}" variant="filled"
@@ -136,10 +126,15 @@
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>Travel Order No.</flux:table.column>
-                        <flux:table.column>Name of Official/Personnel</flux:table.column>
+                        <flux:table.column>Destination/Purpose</flux:table.column>
+                        @if ($type === 'national')
+                            <flux:table.column>Personnel</flux:table.column>
+                        @else
+                            <flux:table.column>Passengers</flux:table.column>
+                        @endif
+
                         <flux:table.column>Office</flux:table.column>
                         <flux:table.column>Travel Date</flux:table.column>
-                        <flux:table.column>Purpose of Travel</flux:table.column>
                         <flux:table.column>Highlights/Outputs</flux:table.column>
                     </flux:table.columns>
 
@@ -150,11 +145,39 @@
                                     {{ $ticket->to_no ?? '' }}
                                 </flux:table.cell>
 
-                                <flux:table.cell>
+                                <flux:table.cell class="whitespace-normal">
+                                    <div class="flex flex-col gap-0.5 max-w-[250px]">
+                                        <span
+                                            class="font-medium text-zinc-900 dark:text-zinc-100 break-words whitespace-normal">
+                                            {{ $type === 'national' ? $ticket->route : $ticket->destination }}
+                                        </span>
+
+                                        <span
+                                            class="text-xs text-zinc-400 dark:text-zinc-500 font-normal break-words whitespace-normal">
+                                            {{ $ticket->purpose ?? '' }}
+                                        </span>
+                                    </div>
+                                </flux:table.cell>
+
+                                <flux:table.cell class="max-w-xs truncate text-sm text-zinc-600 dark:text-zinc-400">
                                     @if ($type === 'national')
-                                        {{ is_array($ticket->personnel) ? implode(', ', $ticket->personnel) : $ticket->personnel }}
+                                        @if (is_array($ticket->personnel))
+                                            <div class="space-y-0.5">
+                                                @foreach ($ticket->personnel as $person)
+                                                    <div>• {{ $person['name'] ?? $person }} <span
+                                                            class="text-zinc-400">({{ $person['position'] ?? 'N/A' }})</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            {{ $ticket->personnel }}
+                                        @endif
                                     @else
-                                        {{ $ticket->user->name ?? '' }}
+                                        @if (is_array($ticket->passengers))
+                                            {{ implode(', ', $ticket->passengers) }}
+                                        @else
+                                            {{ $ticket->passengers }}
+                                        @endif
                                     @endif
                                 </flux:table.cell>
 
@@ -163,26 +186,36 @@
                                 </flux:table.cell>
 
                                 <flux:table.cell class="text-zinc-500 dark:text-zinc-400 text-xs">
-                                    <div class="flex items-center gap-2">
-                                        <flux:icon name="calendar" class="size-4 text-zinc-400 shrink-0" />
-                                        <span>
-                                            @if ($type === 'national')
-                                                {{ $ticket->departure?->format('M d, Y') }} -
-                                                {{ $ticket->return_date?->format('M d, Y') }}
-                                            @else
-                                                {{ $ticket->start_date?->format('M d, Y') }} -
-                                                {{ $ticket->end_date?->format('M d, Y') }}
-                                            @endif
-                                        </span>
+                                    <div class="flex flex-col gap-1.5 justify-center">
+                                        @if ($type === 'national')
+                                            <div class="flex items-center gap-1.5 whitespace-nowrap">
+                                                <flux:icon name="calendar" class="size-3.5 text-zinc-400 shrink-0" />
+                                                <span>{{ $ticket->departure?->format('M d, Y') }}</span>
+                                            </div>
+                                            <div
+                                                class="flex items-center gap-1.5 whitespace-nowrap text-zinc-400 dark:text-zinc-500">
+                                                <flux:icon name="calendar" class="size-3.5 text-zinc-400/70 shrink-0" />
+                                                <span>{{ $ticket->return_date?->format('M d, Y') }}</span>
+                                            </div>
+                                        @else
+                                            <div class="flex items-center gap-1.5 whitespace-nowrap">
+                                                <flux:icon name="calendar" class="size-3.5 text-zinc-400 shrink-0" />
+                                                <span>{{ $ticket->start_date?->format('M d, Y') }}</span>
+                                            </div>
+                                            <div
+                                                class="flex items-center gap-1.5 whitespace-nowrap text-zinc-400 dark:text-zinc-500">
+                                                <flux:icon name="calendar" class="size-3.5 text-zinc-400/70 shrink-0" />
+                                                <span>{{ $ticket->end_date?->format('M d, Y') }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </flux:table.cell>
 
-                                <flux:table.cell>
-                                    {{ $type === 'national' ? $ticket->purpose : $ticket->purpose ?? $ticket->destination }}
-                                </flux:table.cell>
-
-                                <flux:table.cell>
-                                    {{ $ticket->toReport->outputs ?? '' }}
+                                <flux:table.cell class="whitespace-normal">
+                                    <div
+                                        class="max-w-[300px] text-sm text-zinc-700 dark:text-zinc-300 break-words whitespace-normal">
+                                        {{ $ticket->toReport->outputs ?? '' }}
+                                    </div>
                                 </flux:table.cell>
                             </flux:table.row>
                         @empty
@@ -204,7 +237,14 @@
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>TO No.</flux:table.column>
-                        <flux:table.column>Destination</flux:table.column>
+                        <flux:table.column>Destination/Purpose</flux:table.column>
+
+                        @if ($type === 'national')
+                            <flux:table.column>Personnel</flux:table.column>
+                        @else
+                            <flux:table.column>Passengers</flux:table.column>
+                        @endif
+
                         <flux:table.column>Travel Date</flux:table.column>
                         <flux:table.column>Travel Status</flux:table.column>
                         <flux:table.column>Report Status</flux:table.column>
@@ -233,22 +273,58 @@
                                     </div>
                                 </flux:table.cell>
 
-                                <flux:table.cell>
-                                    {{ $destination }}
+                                <flux:table.cell class="whitespace-normal">
+                                    <div class="flex flex-col gap-0.5 max-w-[250px]">
+                                        <span
+                                            class="font-medium text-zinc-900 dark:text-zinc-100 break-words whitespace-normal">
+                                            {{ $destination }}
+                                        </span>
+                                        <span
+                                            class="text-xs text-zinc-400 dark:text-zinc-500 font-normal break-words whitespace-normal">
+                                            {{ $type === 'national' ? $ticket->purpose : $ticket->purpose ?? '' }}
+                                        </span>
+                                    </div>
+                                </flux:table.cell>
+                                <flux:table.cell class="max-w-xs truncate text-sm text-zinc-600 dark:text-zinc-400">
+                                    @if ($type === 'national')
+                                        @if (is_array($ticket->personnel))
+                                            <div class="space-y-0.5">
+                                                @foreach ($ticket->personnel as $person)
+                                                    <div>• {{ $person['name'] ?? $person }} <span
+                                                            class="text-zinc-400">({{ $person['position'] ?? 'N/A' }})</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            {{ $ticket->personnel }}
+                                        @endif
+                                    @else
+                                        @if (is_array($ticket->passengers))
+                                            {{ implode(', ', $ticket->passengers) }}
+                                        @else
+                                            {{ $ticket->passengers }}
+                                        @endif
+                                    @endif
                                 </flux:table.cell>
 
-                                <flux:table.cell class="text-zinc-500 dark:text-zinc-400">
-                                    <div class="flex items-center gap-2">
-                                        <flux:icon name="calendar" class="size-4 text-zinc-400 shrink-0" />
-                                        <span>
-                                            {{ $startDate?->format('M d, Y') }} - {{ $endDate?->format('M d, Y') }}
-                                        </span>
+                                <flux:table.cell class="text-zinc-500 dark:text-zinc-400 text-xs">
+                                    <div class="flex flex-col gap-1.5 justify-center">
+                                        <div class="flex items-center gap-1.5 whitespace-nowrap">
+                                            <flux:icon name="calendar" class="size-3.5 text-zinc-400 shrink-0" />
+                                            <span>{{ $startDate?->format('M d, Y') }}</span>
+                                        </div>
+                                        <div
+                                            class="flex items-center gap-1.5 whitespace-nowrap text-zinc-400 dark:text-zinc-500">
+                                            <flux:icon name="calendar" class="size-3.5 text-zinc-400/70 shrink-0" />
+                                            <span>{{ $endDate?->format('M d, Y') }}</span>
+                                        </div>
                                     </div>
                                 </flux:table.cell>
 
                                 <flux:table.cell>
                                     @if ($endDate && $endDate->isPast())
-                                        <flux:badge color="emerald" size="sm" inset="top bottom">Completed</flux:badge>
+                                        <flux:badge color="emerald" size="sm" inset="top bottom">Completed
+                                        </flux:badge>
                                     @else
                                         <flux:badge color="sky" size="sm" inset="top bottom">In Progress
                                         </flux:badge>
@@ -305,12 +381,11 @@
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="6" class="py-12 text-center">
+                                <flux:table.cell colspan="7" class="py-12 text-center">
                                     <div class="flex flex-col items-center justify-center space-y-2">
                                         <flux:icon name="clipboard-document-check" class="size-8 text-zinc-400" />
                                         <flux:text variant="strong" class="text-zinc-500">No travel orders or trip tickets
-                                            found
-                                        </flux:text>
+                                            found</flux:text>
                                         <flux:text size="sm" class="text-zinc-400">Your completed trips requiring
                                             post-travel reports will appear here.</flux:text>
                                     </div>
