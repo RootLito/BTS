@@ -74,7 +74,7 @@
                 <img src="{{ asset('images/top.png') }}" alt="Header" class="top">
 
                 <div class="ticket-container leading-[1.2] text-justify text-[12pt]">
-                    <div class="flex justify-end  leading-none my-6">
+                    <div class="flex justify-end  leading-none my-4">
                         <div class="w-44">
                             <div class="flex mb-1 justify-between">
                                 <span class="font-bold">Date:</span>
@@ -84,9 +84,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="text-center mb-8">
-                        <h1 class="text-[16pt] font-bold leading-none uppercase my-4">TRAVEL ORDER NO. <span
-                                x-text="form.to_no" class="underline"></span></h1>
+                    <div class="text-center mb-6">
+                        <h1 class="text-[16pt] font-bold leading-none uppercase my-4">TRAVEL ORDER NO. <span x-text="form.to_no || '___________'" class="underline"></span></h1>
                     </div>
 
                     <div class="leading-none mb-8">
@@ -106,7 +105,7 @@
                     </div>
 
                     <div class="text-[12pt]">
-                        <p class="indent-10 mb-6">
+                        <p class="indent-10 mb-8">
                             You are hereby directed to travel on Official Business via Cebu Pacific or Philippine Airlines,
                             and Ferry Boats to <span class="underline font-bold uppercase" x-text="form.route"></span> on
                             <span class="underline font-bold"
@@ -126,31 +125,31 @@
                                 })()"></span>.
                         </p>
 
-                        <p class="mb-10">
+                        <p class="mb-8">
                             Purpose&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;<span x-text="form.purpose"></span>
                         </p>
 
-                        <p class="mb-8">
+                        <p class="mb-6">
                             It is understood that a report shall be submitted on your completion on this travel.
                         </p>
 
-                        <div class="w-40 ms-auto mb-8">
+                        <div class="w-40 ms-auto mb-6">
                             <p class="mb-8">Approved by:</p>
                             <p class="underline font-bold leading-none" x-text="form.rd"></p>
                             <p>Regional Director</p>
                         </div>
 
-                        <div class="w-full flex items-center mb-6">
+                        <div class="w-full flex items-center mb-4">
                             <span class="w-full border-t-1 border-dashed "></span>
                         </div>
 
                         <p>Transportation Order</p>
-                        <div class="w-full flex justify-between mb-8">
+                        <div class="w-full flex justify-between mb-6">
                             <p>Expiry Date _______________</p>
                             <p class="w-64">Validation Stamp</p>
                         </div>
 
-                        <p class="mb-6">
+                        <p class="mb-4">
                             Please issue plane ticket to
                             <template x-for="(p, index) in form.personnel" :key="index">
                                 <span class="uppercase font-bold"
@@ -161,17 +160,17 @@
                             Resources, Regional Office XI, Davao City as per Travel Order.
                         </p>
 
-                        <p class="mb-8">
+                        <p class="mb-6">
                             The mode of payment for this particular travel is:______________________________________
                         </p>
 
-                        <div class="w-40 ms-auto mb-6">
+                        <div class="w-40 ms-auto mb-4">
                             <p class="underline font-bold leading-none" x-text="form.rd"></p>
                             <p>Regional Director</p>
                         </div>
 
                         <p>In case of credit </p>
-                        <div class="w-full flex justify-between mb-6">
+                        <div class="w-full flex justify-between mb-4">
                             <p>Certifications as to Funds:</p>
                             <p class="w-64">Ticket Issued by:</p>
                         </div>
